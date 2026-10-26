@@ -87,7 +87,18 @@ function Resolve-GameRoot([string]$ExplicitPath) {
         }
     }
 
-    throw "Could not auto-detect 'One Way Tickets' installation across Steam libraries. Please pass -GameRoot '<path to game>'."
+    # 4. If not auto-detected, pop up a native Windows Folder Browser Dialog for the user
+    Add-Type -AssemblyName System.Windows.Forms
+    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dialog.Description = "请选择《再再启程 One Way Tickets》游戏安装目录 (Select Game Root Folder)"
+    if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        $picked = $dialog.SelectedPath
+        if (Test-Path (Join-Path $picked "One Way Tickets_Data\Managed")) {
+            return $picked
+        }
+    }
+
+    throw "Could not find 'One Way Tickets' installation directory."
 }
 
 $ResolvedGameRoot = Resolve-GameRoot $GameRoot

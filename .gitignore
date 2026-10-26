@@ -3,6 +3,7 @@ bin/
 obj/
 *.dll
 *.pdb
+!dist/*.dll
 
 # IDE & Editor
 .vs/

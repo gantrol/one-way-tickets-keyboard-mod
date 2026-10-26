@@ -1,6 +1,7 @@
 param(
     [string]$GameRoot = "",
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+    [switch]$BuildFromSource
 )
 
 $ErrorActionPreference = "Stop"
@@ -93,24 +94,42 @@ function Resolve-GameRoot([string]$ExplicitPath) {
         }
     }
 
-    throw "Could not auto-detect 'One Way Tickets' installation across Steam libraries. Please pass -GameRoot '<path to game>'."
+    # 4. If not auto-detected, pop up a native Windows Folder Browser Dialog for the user
+    Add-Type -AssemblyName System.Windows.Forms
+    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dialog.Description = "请选择《再再启程 One Way Tickets》游戏安装目录 (Select Game Root Folder)"
+    if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        $picked = $dialog.SelectedPath
+        if (Test-Path (Join-Path $picked "One Way Tickets_Data\Managed\World.dll")) {
+            return $picked
+        }
+    }
+
+    throw "Could not find 'One Way Tickets' installation directory."
 }
 
 $ResolvedGameRoot = Resolve-GameRoot $GameRoot
 $ManagedDir = Join-Path $ResolvedGameRoot "One Way Tickets_Data\Managed"
 Write-Host "[0/4] Detected Game Root: $ResolvedGameRoot" -ForegroundColor Green
 
-if (-not $SkipBuild) {
+$DistDll = Join-Path $ProjectDir "dist\OneWayTickets.KeyboardMod.dll"
+$ReleaseDll = Join-Path $ProjectDir "bin\Release\OneWayTickets.KeyboardMod.dll"
+
+if ($BuildFromSource -or ((-not $SkipBuild) -and (-not (Test-Path $DistDll)))) {
     Write-Host "[1/4] Building OneWayTickets.KeyboardMod.csproj ..." -ForegroundColor Cyan
     dotnet build (Join-Path $ProjectDir "OneWayTickets.KeyboardMod.csproj") -c Release "-p:GameManagedDir=$ManagedDir" | Out-Host
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet build failed with exit code $LASTEXITCODE"
     }
+    if (Test-Path $ReleaseDll) {
+        New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir "dist") | Out-Null
+        Copy-Item $ReleaseDll $DistDll -Force
+    }
 }
 
-$BuiltDll = Join-Path $ProjectDir "bin\Release\OneWayTickets.KeyboardMod.dll"
+$BuiltDll = if ((Test-Path $ReleaseDll) -and $BuildFromSource) { $ReleaseDll } elseif (Test-Path $DistDll) { $DistDll } else { $ReleaseDll }
 if (-not (Test-Path $BuiltDll)) {
-    throw "Build artifact not found: $BuiltDll"
+    throw "Mod DLL not found: $BuiltDll"
 }
 
 $WorldDll = Join-Path $ManagedDir "World.dll"
@@ -130,6 +149,7 @@ Copy-Item -Path $BuiltDll -Destination $TargetModDll -Force
 Write-Host "[4/4] Injecting ModEntryPoint.EnsureInitialized() into World.Input.WorldInputController::Update() ..." -ForegroundColor Cyan
 
 $CecilCandidates = @(
+    (Join-Path $ProjectDir "dist\Mono.Cecil.dll"),
     "C:\Users\gantrol\.nuget\packages\microsoft.net.illink.tasks\9.0.18\tools\net472\Mono.Cecil.dll"
 )
 $CecilPath = $CecilCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
@@ -138,7 +158,7 @@ if (-not $CecilPath) {
     if ($FoundCecil) { $CecilPath = $FoundCecil.FullName }
 }
 if (-not $CecilPath) {
-    throw "Mono.Cecil.dll not found in local NuGet cache."
+    throw "Mono.Cecil.dll not found in dist\ or local NuGet cache."
 }
 
 Add-Type -Path $CecilPath

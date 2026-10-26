@@ -36,6 +36,7 @@ namespace OneWayTickets.KeyboardMod
     public sealed class KeyboardToolboxController
     {
         private readonly DeviceSlotResolver _slotResolver;
+        private readonly ToolAnimationController _animController;
 
         private readonly bool[] _holdingSlotMaintain = new bool[DeviceSlotResolver.MaxWeaponSlots];
         private bool _holdingWrench;
@@ -63,7 +64,10 @@ namespace OneWayTickets.KeyboardMod
         public KeyboardToolboxController(DeviceSlotResolver slotResolver)
         {
             _slotResolver = slotResolver;
+            _animController = new ToolAnimationController(slotResolver);
         }
+
+        public ToolAnimationController AnimationController => _animController;
 
         public bool IsSlotMaintaining(int slotIndex)
         {
@@ -78,6 +82,8 @@ namespace OneWayTickets.KeyboardMod
 
         public void UpdateInput(Keyboard kb)
         {
+            _animController.UpdateAnimation(Time.unscaledDeltaTime);
+
             if (kb == null)
             {
                 return;
@@ -87,7 +93,7 @@ namespace OneWayTickets.KeyboardMod
             bool ctrlHeld = kb.leftCtrlKey.isPressed || kb.rightCtrlKey.isPressed;
             bool altHeld = kb.leftAltKey.isPressed || kb.rightAltKey.isPressed;
 
-            // Row 3: Per-slot direct maintenance keys (A S D F G)
+            // Left Hand Upper Row: Per-slot direct maintenance keys (Q W E R T)
             for (int i = 0; i < cfg.SlotMaintainKeys.Length && i < DeviceSlotResolver.MaxWeaponSlots; i++)
             {
                 Key k = cfg.SlotMaintainKeys[i];
@@ -104,7 +110,7 @@ namespace OneWayTickets.KeyboardMod
                 }
             }
 
-            // Row 4: Specific tool keys (Z X C V B) + Global Smart Maintain (Space)
+            // Right Hand Home Row: Specific tool keys (H J K L ;) + Global Smart Maintain (Space)
             bool zDown = !ctrlHeld && !altHeld && cfg.ToolWrenchKey != Key.None && kb[cfg.ToolWrenchKey].wasPressedThisFrame;
             bool xDown = !ctrlHeld && !altHeld && cfg.ToolExtinguisherKey != Key.None && kb[cfg.ToolExtinguisherKey].wasPressedThisFrame;
             bool cDown = !ctrlHeld && !altHeld && cfg.ToolSawKey != Key.None && kb[cfg.ToolSawKey].wasPressedThisFrame;
@@ -119,13 +125,14 @@ namespace OneWayTickets.KeyboardMod
             _holdingWakeUp = !ctrlHeld && !altHeld && cfg.ToolWakeUpKey != Key.None && kb[cfg.ToolWakeUpKey].isPressed;
             _holdingGlobalSmart = !ctrlHeld && !altHeld && cfg.GlobalSmartMaintainKey != Key.None && kb[cfg.GlobalSmartMaintainKey].isPressed;
 
-            // B + 1..6: Targeted character wake-up on press
+            // WakeUp key (;) + Character key (Y..[ or 1..6): Targeted character wake-up on press
             if (_holdingWakeUp)
             {
-                for (int i = 0; i < cfg.CharacterKeys.Length && i < 6; i++)
+                for (int i = 0; i < 6; i++)
                 {
-                    Key ck = cfg.CharacterKeys[i];
-                    if (ck != Key.None && kb[ck].wasPressedThisFrame)
+                    Key ck = i < cfg.CharacterKeys.Length ? cfg.CharacterKeys[i] : Key.None;
+                    Key ak = i < cfg.CharacterAltKeys.Length ? cfg.CharacterAltKeys[i] : Key.None;
+                    if ((ck != Key.None && kb[ck].wasPressedThisFrame) || (ak != Key.None && kb[ak].wasPressedThisFrame))
                     {
                         TryWakeUpCharacterByIndex(i, true);
                     }
@@ -320,6 +327,7 @@ namespace OneWayTickets.KeyboardMod
             }
 
             SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 状态完好 ({device.current_hp}/{device.max_hp})，无需抢修");
+            _animController.TriggerToolUse(ToolAnimCategory.Wrench, slotIndex, false, 0.14f);
         }
 
         private void OnWrenchKeyPressed(IReadOnlyList<ResolvedDeviceSlot> slots)
@@ -346,6 +354,7 @@ namespace OneWayTickets.KeyboardMod
                 SetStatus($"[{keyLabel}:车载维修包] {repairMsg}");
                 return;
             }
+            _animController.TriggerToolUse(ToolAnimCategory.Wrench, -1, false, 0.16f);
             SetStatus($"[{keyLabel}:{wrenchName}] 当前无 0 血损毁或停滞设备需要修缮");
         }
 
@@ -362,6 +371,7 @@ namespace OneWayTickets.KeyboardMod
             }
             else
             {
+                _animController.TriggerToolUse(ToolAnimCategory.Extinguisher, -1, false, 0.16f);
                 SetStatus($"[{keyLabel}:{extName}] 当前没有着火的设备");
             }
         }
@@ -379,6 +389,7 @@ namespace OneWayTickets.KeyboardMod
             }
             else
             {
+                _animController.TriggerToolUse(ToolAnimCategory.Saw, -1, false, 0.16f);
                 SetStatus($"[{keyLabel}:{sawStage}] 当前没有被藤蔓缠绕的设备");
             }
         }
@@ -403,6 +414,7 @@ namespace OneWayTickets.KeyboardMod
             }
             else
             {
+                _animController.TriggerToolUse(ToolAnimCategory.Rag, -1, IsGlobalDrierStage(), 0.16f);
                 SetStatus($"[{keyLabel}:{ragStage}] 当前没有进水或被酸液腐蚀的设备");
             }
         }
@@ -425,6 +437,7 @@ namespace OneWayTickets.KeyboardMod
             }
             else
             {
+                _animController.TriggerToolUse(ToolAnimCategory.WakeUp, -1, false, 0.16f);
                 SetStatus($"[{keyLabel}:{wakeStage}] 当前没有处于昏迷状态的角色");
             }
         }
@@ -707,6 +720,7 @@ namespace OneWayTickets.KeyboardMod
             {
                 _ragCooldownTicks = cdTicks;
                 PlayToolOneShot(wipeToolId);
+                _animController.TriggerToolUse(ToolAnimCategory.Rag, slot.Index, isDrier, 0.24f);
             }
 
             return wiped;
@@ -729,6 +743,7 @@ namespace OneWayTickets.KeyboardMod
                     _stuporCooldownTicks = 15;
                     stuporSlotIndex = slots[i].Index;
                     PlayToolOneShot(GetWrenchToolId());
+                    _animController.TriggerToolUse(ToolAnimCategory.Wrench, slots[i].Index, false, 0.22f);
                     return true;
                 }
             }
@@ -749,6 +764,7 @@ namespace OneWayTickets.KeyboardMod
             }
 
             fixCtx.Fix(slot.UiView);
+            _animController.TriggerToolUse(ToolAnimCategory.Wrench, slot.Index, false, 0.24f);
             return true;
         }
 
@@ -782,6 +798,7 @@ namespace OneWayTickets.KeyboardMod
                 ResolvedDeviceSlot target = slots[bestIdx];
                 fixCtx.Fix(target.UiView);
                 MarkSlotFeedback(target.Index);
+                _animController.TriggerToolUse(ToolAnimCategory.Wrench, target.Index, false, 0.24f);
                 string devName = GetDeviceDisplayName(target.Device);
                 message = $"已恢复 {target.Index + 1}号位【{devName}】耐久 ({target.Device.current_hp}/{target.Device.max_hp})";
                 return true;
@@ -794,6 +811,7 @@ namespace OneWayTickets.KeyboardMod
                 if (caravanArea != null)
                 {
                     fixCtx.Fix(caravanArea);
+                    _animController.TriggerToolUse(ToolAnimCategory.Wrench, -1, false, 0.24f);
                     message = $"已恢复车体耐久 ({wctx.caravan_hp}/{wctx.caravan_hp_max})";
                     return true;
                 }
@@ -847,6 +865,7 @@ namespace OneWayTickets.KeyboardMod
             }
 
             PlayToolOneShot(wrenchId);
+            _animController.TriggerToolUse(ToolAnimCategory.Wrench, slot.Index, false, 0.24f);
 
             if (fixMask != null)
             {
@@ -885,6 +904,7 @@ namespace OneWayTickets.KeyboardMod
             float efficiency = GetExtinguisherEfficiency();
             bool extinguished = fired.ChangeFire(-efficiency * 0.008333334f);
             PlayToolOneShot(GetExtinguisherToolId());
+            _animController.TriggerToolUse(ToolAnimCategory.Extinguisher, slotIndex, false, 0.24f);
             if (extinguished)
             {
                 MarkSlotFeedback(slotIndex);
@@ -946,6 +966,7 @@ namespace OneWayTickets.KeyboardMod
                             sbv.RemoveSelf();
                             _sawCooldownTicks = cdTicks;
                             PlayToolOneShot(sawToolId);
+                            _animController.TriggerToolUse(ToolAnimCategory.Saw, slot.Index, false, 0.24f);
                             return true;
                         }
                     }
@@ -976,6 +997,7 @@ namespace OneWayTickets.KeyboardMod
                             bind.RemoveVine(ad, v);
                             _sawCooldownTicks = cdTicks;
                             PlayToolOneShot(sawToolId);
+                            _animController.TriggerToolUse(ToolAnimCategory.Saw, slot.Index, false, 0.24f);
                             return true;
                         }
                     }
@@ -1007,15 +1029,18 @@ namespace OneWayTickets.KeyboardMod
             }
 
             Character c = charMgr.characters[charIndex];
+            string wakeKeyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.ToolWakeUpKey);
             string wakeStage = GetWakeStageDescription();
             if (c != null && c.state is Coma)
             {
                 ApplyWakeUpTrigger(c, isKeyDown);
-                SetStatus($"[B+{charIndex + 1}:{wakeStage}] 正在唤醒 {charIndex + 1} 号昏迷角色...");
+                _animController.TriggerToolUse(ToolAnimCategory.WakeUp, -1, false, 0.24f);
+                SetStatus($"[{wakeKeyLabel}+{charIndex + 1}:{wakeStage}] 正在唤醒 {charIndex + 1} 号昏迷角色...");
             }
             else if (isKeyDown)
             {
-                SetStatus($"[B+{charIndex + 1}:{wakeStage}] {charIndex + 1} 号角色当前清醒，无需唤醒");
+                _animController.TriggerToolUse(ToolAnimCategory.WakeUp, -1, false, 0.16f);
+                SetStatus($"[{wakeKeyLabel}+{charIndex + 1}:{wakeStage}] {charIndex + 1} 号角色当前清醒，无需唤醒");
             }
         }
 
@@ -1060,6 +1085,11 @@ namespace OneWayTickets.KeyboardMod
                         break;
                     }
                 }
+            }
+
+            if (wokeAny)
+            {
+                _animController.TriggerToolUse(ToolAnimCategory.WakeUp, -1, isGlobalAed, 0.24f);
             }
 
             if (wokeAny && isClickWakeTool)

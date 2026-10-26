@@ -7,12 +7,13 @@ using UnityEngine.InputSystem;
 using World;
 using World.Characters;
 using World.Helpers;
+using World.Player_Tool;
 
 namespace OneWayTickets.KeyboardMod
 {
     /// <summary>
-    /// Persistent MonoBehaviour that coordinates keyboard input (via Unity InputSystem),
-    /// 120 TPS deterministic simulation ticks, and the toggleable HUD shortcut overlay.
+    /// Persistent MonoBehaviour that coordinates two-handed keyboard input (via Unity InputSystem),
+    /// 120 TPS deterministic simulation ticks, tool pull-out animations, and the HUD overlay anchored near the Toolbox.
     /// </summary>
     public sealed class KeyboardModBehaviour : MonoBehaviour
     {
@@ -22,6 +23,7 @@ namespace OneWayTickets.KeyboardMod
         private KeyboardCharacterController _charController;
         private KeyboardWeaponController _weaponController;
         private KeyboardToolboxController _toolboxController;
+        private KeyboardDrivingController _drivingController;
 
         private float _tickAccumulator;
         private GUIStyle _badgeStyle;
@@ -43,6 +45,7 @@ namespace OneWayTickets.KeyboardMod
             _charController = new KeyboardCharacterController(_slotResolver);
             _weaponController = new KeyboardWeaponController(_slotResolver, _charController);
             _toolboxController = new KeyboardToolboxController(_slotResolver);
+            _drivingController = new KeyboardDrivingController();
         }
 
         private void Update()
@@ -80,16 +83,19 @@ namespace OneWayTickets.KeyboardMod
 
             try
             {
-                // 1. Character input (runs first so 1..6 -> Q..T dispatch can claim the Q..T press)
+                // 1. Right-Hand Character input (Y..[ or 1..6 selection, ' / ] auto-assign, and A..G / Q..T dispatch)
                 _charController.UpdateInput(kb);
 
-                // 2. Weapon bar input (Q..T, Shift+Q..T, Alt+Q..T, Ctrl+Q..T, Tab)
+                // 2. Left-Hand Weapon bar input (A..G, Shift+A..G, Alt+A..G, Ctrl+A..G, Tab)
                 _weaponController.UpdateInput(kb);
 
-                // 3. Toolbox input (A..G, Z/X/C/V/B, Space)
+                // 3. Toolbox input (Left-Hand Q..T per-slot fix + Right-Hand H J K L ; + Space global fix)
                 _toolboxController.UpdateInput(kb);
 
-                // 4. Run 120 TPS simulation steps when game ticker is active and unpaused
+                // 4. Left-Hand Driving & Wheel input (Z = Brake, X = Psionic Boost / Bellows, C = Wheel Slot)
+                _drivingController.UpdateInput(kb);
+
+                // 5. Run 120 TPS simulation steps when game ticker is active and unpaused
                 Ticker ticker = Singleton<Ticker>.instance;
                 bool tickerActive = ticker == null || (ticker.can_start_tick && !ticker.is_end);
                 if (tickerActive && Time.timeScale > 0f)
@@ -100,8 +106,10 @@ namespace OneWayTickets.KeyboardMod
                     {
                         _tickAccumulator -= TickInterval;
                         steps++;
+                        _charController.Tick120();
                         _weaponController.Tick120();
                         _toolboxController.Tick120();
+                        _drivingController.Tick120();
                     }
                     if (_tickAccumulator > TickInterval * 4f)
                     {
@@ -158,53 +166,102 @@ namespace OneWayTickets.KeyboardMod
             bool inCombat = IsInCombatScene(sceneRoot);
             string activeToast = GetLatestToastMessage();
 
-            // In non-combat scenes (safe area / campfire / settlement), hide all combat HUD badges and status bars
-            // unless the user just pressed F9/F10 to trigger a system toast.
             if (!inCombat)
             {
                 if (!string.IsNullOrEmpty(activeToast))
                 {
                     EnsureGuiStyles();
-                    DrawTopStatusBar(cfg, activeToast, false);
+                    DrawToolboxStatusArea(sceneRoot, cfg, activeToast, false);
                 }
                 return;
             }
 
             EnsureGuiStyles();
 
-            DrawTopStatusBar(cfg, activeToast, true);
+            DrawToolboxStatusArea(sceneRoot, cfg, activeToast, true);
             DrawDeviceSlotBadges(sceneRoot, cfg);
         }
 
-        private void DrawTopStatusBar(ModConfig cfg, string activeToast, bool inCombat)
+        /// <summary>
+        /// Draws the key response feedback box and compact shortcut hints right above the Toolbox on the right side
+        /// of the caravan dashboard (never overlapping the top route progress bar or top-left relic panel).
+        /// </summary>
+        private void DrawToolboxStatusArea(WorldSceneRoot sceneRoot, ModConfig cfg, string activeToast, bool inCombat)
         {
             Character selectedChar = inCombat ? Cubicle_Helper.GetSelectCharacter() : null;
-            string charHint = selectedChar != null ? " 【已选中角色：按 Q-T 派驻工位 / 按 0 撤回】" : string.Empty;
-            string smartHint = (inCombat && _toolboxController.IsGlobalSmartMaintaining) ? " 【空格：全局抢修中】" : string.Empty;
+            string charHint = selectedChar != null ? " 【已选人：按 A-G 派驻 / Bksp 撤回】" : string.Empty;
+            string smartHint = (inCombat && _toolboxController.IsGlobalSmartMaintaining) ? " 【空格：全车抢修中】" : string.Empty;
+            string brakeHint = (inCombat && _drivingController.IsBraking) ? " 【Z：刹车中】" : string.Empty;
+
+            string wrenchKey = ModConfig.FormatKeyLabel(cfg.ToolWrenchKey);
+            string extKey = ModConfig.FormatKeyLabel(cfg.ToolExtinguisherKey);
+            string sawKey = ModConfig.FormatKeyLabel(cfg.ToolSawKey);
+            string ragKey = ModConfig.FormatKeyLabel(cfg.ToolRagKey);
+            string wakeKey = ModConfig.FormatKeyLabel(cfg.ToolWakeUpKey);
+            string autoCharKey = ModConfig.FormatKeyLabel(cfg.CharacterAutoAssignKey);
+            string brakeKey = ModConfig.FormatKeyLabel(cfg.BrakeKey);
+            string boostKey = ModConfig.FormatKeyLabel(cfg.PsionicBoostKey);
 
             string barText = string.IsNullOrEmpty(activeToast)
-                ? $"[键盘Mod] 1-6:选人派驻 | Q-T:固定槽位1-5武器(Shift副/Alt三/Ctrl托管/Tab全托管) | A-G:对应槽位抢修 | ZXCVB:工具箱 | Space:全修 | F9:隐藏{charHint}{smartHint}"
-                : $"⌨ {activeToast}{charHint}{smartHint}";
+                ? $"工具[{wrenchKey}扳 {extKey}灭 {sawKey}锯 {ragKey}擦 {wakeKey}醒 Space全修] 车[{brakeKey}刹 {boostKey}加速] 人[Y~[选 {autoCharKey}分配]{charHint}{smartHint}{brakeHint}"
+                : $"⌨ {activeToast}{charHint}{smartHint}{brakeHint}";
 
-            // Center horizontally so we never overlap the top-left Relic bar or top-right Caravan HP bar
-            float maxWidth = Mathf.Max(420f, Screen.width - 680f);
-            float width = Mathf.Min(maxWidth, 980f);
-            float x = (Screen.width - width) * 0.5f;
-            Rect barRect = new Rect(x, 6f, width, 24f);
+            Vector2 anchorGuiPos = GetToolboxAreaAnchorGuiPos(sceneRoot);
+            float boxWidth = Mathf.Clamp(Screen.width * 0.28f, 380f, 520f);
+            float x = Mathf.Clamp(anchorGuiPos.x - boxWidth * 0.62f, Screen.width * 0.52f, Screen.width - boxWidth - 12f);
+            float y = Mathf.Clamp(anchorGuiPos.y, Screen.height * 0.48f, Screen.height * 0.66f);
+
+            Rect barRect = new Rect(x, y, boxWidth, 26f);
             GUI.Box(barRect, barText, string.IsNullOrEmpty(activeToast) ? _statusBarStyle : _toastPopupStyle);
 
-            // Prominent interactive banner when any weapon has [AUTO] enabled
-            if (inCombat && _weaponController.HasAnyAutoFireEnabled())
+            // Interactive [AUTO] status pill right above the status bar in the same Toolbox zone
+            bool anyWeaponAuto = inCombat && _weaponController.HasAnyAutoFireEnabled();
+            bool charAuto = inCombat && _charController.IsAutoAssignEnabled;
+            if (anyWeaponAuto || charAuto)
             {
-                float bannerWidth = Mathf.Min(width, 760f);
-                float bannerX = (Screen.width - bannerWidth) * 0.5f;
-                Rect bannerRect = new Rect(bannerX, 32f, bannerWidth, 24f);
-                string bannerText = "🟢 自动托管运行中 — 随时可按键/鼠标手动操控武器 | 按 [Tab] 或点击此处一键取消全托管 (Ctrl+Q~T 单槽取消)";
-                if (GUI.Button(bannerRect, bannerText, _autoCancelBannerStyle))
+                Rect bannerRect = new Rect(x, y - 26f, boxWidth, 24f);
+                string autoParts = anyWeaponAuto && charAuto
+                    ? "🟢 武器[AUTO] + 人物自动派驻中 — 点击此处或按 [Tab] 关闭"
+                    : anyWeaponAuto
+                        ? "🟢 武器自动托管中 (随时可按键/鼠标接管) — 点击或按 [Tab] 取消"
+                        : $"🟢 人物持续自动分配中 — 点击或按 [Ctrl+{autoCharKey}] 关闭";
+
+                if (GUI.Button(bannerRect, autoParts, _autoCancelBannerStyle))
                 {
-                    _weaponController.CancelAllAutoFire("已通过顶部提示栏关闭全部武器【自动托管】");
+                    if (anyWeaponAuto)
+                    {
+                        _weaponController.CancelAllAutoFire("已关闭全部武器【自动托管】");
+                    }
+                    else if (charAuto)
+                    {
+                        _charController.ToggleContinuousAutoAssign();
+                    }
                 }
             }
+        }
+
+        private Vector2 GetToolboxAreaAnchorGuiPos(WorldSceneRoot sceneRoot)
+        {
+            float scaleY = Screen.height / 1080f;
+            try
+            {
+                PlayerToolMgrView ptView = _toolboxController.AnimationController.GetPlayerToolMgrView();
+                if (ptView != null && ptView.box_image != null && ptView.box_image.gameObject.activeInHierarchy)
+                {
+                    Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(sceneRoot.uiCamera, ptView.box_image.transform.position);
+                    if (screenPos.x > Screen.width * 0.5f && screenPos.y > 40f && screenPos.y < Screen.height - 40f)
+                    {
+                        float guiY = (Screen.height - screenPos.y) - (138f * scaleY);
+                        return new Vector2(screenPos.x, guiY);
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            // Default fallback right above the Toolbox / Character 6 area on the right side
+            return new Vector2(Screen.width * 0.86f, Screen.height * 0.60f);
         }
 
         private void DrawDeviceSlotBadges(WorldSceneRoot sceneRoot, ModConfig cfg)
@@ -227,13 +284,11 @@ namespace OneWayTickets.KeyboardMod
                 }
 
                 Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(uiCam, slot.PanelTransform.position);
-                // Do not draw or clamp when the weapon panel is slid off-screen (e.g., y < 85px from bottom)
                 if (screenPos.x <= 20f || screenPos.x >= Screen.width - 20f || screenPos.y < 85f || screenPos.y > Screen.height - 60f)
                 {
                     continue;
                 }
 
-                // Convert Unity screen space (bottom-left origin) to GUI space (top-left origin)
                 float guiY = (Screen.height - screenPos.y) - 95f;
                 if (guiY < 56f || guiY > Screen.height - 40f)
                 {
@@ -330,6 +385,12 @@ namespace OneWayTickets.KeyboardMod
                 bestTime = _toolboxController.LastActionStatusTime;
             }
 
+            if (!string.IsNullOrEmpty(_drivingController.LastActionStatus) && now - _drivingController.LastActionStatusTime < 3.5f && _drivingController.LastActionStatusTime > bestTime)
+            {
+                bestMsg = _drivingController.LastActionStatus;
+                bestTime = _drivingController.LastActionStatusTime;
+            }
+
             return bestMsg;
         }
 
@@ -338,7 +399,7 @@ namespace OneWayTickets.KeyboardMod
             if (_darkBgTex == null)
             {
                 _darkBgTex = new Texture2D(1, 1);
-                _darkBgTex.SetPixel(0, 0, new Color(0.08f, 0.1f, 0.14f, 0.84f));
+                _darkBgTex.SetPixel(0, 0, new Color(0.08f, 0.1f, 0.14f, 0.86f));
                 _darkBgTex.Apply();
             }
 
@@ -401,10 +462,10 @@ namespace OneWayTickets.KeyboardMod
             {
                 _statusBarStyle = new GUIStyle(GUI.skin.box)
                 {
-                    fontSize = 13,
+                    fontSize = 12,
                     fontStyle = FontStyle.Bold,
                     alignment = TextAnchor.MiddleCenter,
-                    padding = new RectOffset(10, 10, 3, 3)
+                    padding = new RectOffset(8, 8, 3, 3)
                 };
                 _statusBarStyle.normal.background = _darkBgTex;
                 _statusBarStyle.normal.textColor = new Color(0.95f, 0.92f, 0.72f);
@@ -414,10 +475,10 @@ namespace OneWayTickets.KeyboardMod
             {
                 _toastPopupStyle = new GUIStyle(GUI.skin.box)
                 {
-                    fontSize = 14,
+                    fontSize = 13,
                     fontStyle = FontStyle.Bold,
                     alignment = TextAnchor.MiddleCenter,
-                    padding = new RectOffset(10, 10, 3, 3)
+                    padding = new RectOffset(8, 8, 3, 3)
                 };
                 _toastPopupStyle.normal.background = _activeBgTex;
                 _toastPopupStyle.normal.textColor = new Color(1f, 0.95f, 0.45f);
@@ -427,10 +488,10 @@ namespace OneWayTickets.KeyboardMod
             {
                 _autoCancelBannerStyle = new GUIStyle(GUI.skin.button)
                 {
-                    fontSize = 13,
+                    fontSize = 12,
                     fontStyle = FontStyle.Bold,
                     alignment = TextAnchor.MiddleCenter,
-                    padding = new RectOffset(10, 10, 3, 3)
+                    padding = new RectOffset(8, 8, 3, 3)
                 };
                 _autoCancelBannerStyle.normal.background = _autoBgTex;
                 _autoCancelBannerStyle.hover.background = _autoBgTex;

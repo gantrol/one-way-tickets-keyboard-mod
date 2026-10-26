@@ -56,6 +56,10 @@
       <HintPath>$(GameManagedDir)\UnityEngine.AudioModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>$(GameManagedDir)\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Unity.InputSystem">
       <HintPath>$(GameManagedDir)\Unity.InputSystem.dll</HintPath>
       <Private>false</Private>

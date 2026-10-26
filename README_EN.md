@@ -1,8 +1,8 @@
-# One Way Tickets — Full Keyboard & QoL Mod
+# One Way Tickets — Ergonomic Two-Handed Keyboard & QoL Mod
 
 **[中文文档 (README.md)](./README.md)** | **[Detailed Design & Weapon Table (docs/DESIGN_EN.md)](./docs/DESIGN_EN.md)**
 
-Preserves 100% of vanilla mouse controls while mapping **character dispatch, fixed 5-slot weapon control (`[AUTO]` hosting), and drag-free toolbox maintenance** onto a clean 4-row left-hand keyboard layout.
+Preserves 100% of vanilla mouse controls while splitting high-frequency combat actions across an **ergonomic two-handed home-row layout (`ASDFG` + `HJKL;`)**: Left hand handles **fixed 5-slot weapons, per-slot quick fix, brake, and psionic boost**; Right hand handles **animated toolbox tools, character selection, and one-key optimal character auto-assignment**. Status feedback is anchored cleanly above the Toolbox on the right.
 
 ---
 
@@ -14,35 +14,39 @@ Preserves 100% of vanilla mouse controls while mapping **character dispatch, fix
 
 ---
 
-## Keyboard Layout at a Glance
+## Two-Handed Keyboard Layout at a Glance
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│ [ 1 ]   [ 2 ]   [ 3 ]   [ 4 ]   [ 5 ]   [ 6 ]       <- Row 1: Characters│
-│ Char 1  Char 2  Char 3  Char 4  Char 5  Char 6         (Tap 1~6 -> Q~T) │
-├─────────────────────────────────────────────────────────────────────────┤
-│ [Tab]   [ Q ]   [ W ]   [ E ]   [ R ]   [ T ]       <- Row 2: Weapons   │
-│AllAuto  Slot 1  Slot 2  Slot 3  Slot 4  Slot 5         (Fixed Slots 1-5)│
-├─────────────────────────────────────────────────────────────────────────┤
-│         [ A ]   [ S ]   [ D ]   [ F ]   [ G ]       <- Row 3: Slot Fix  │
-│         Fix 1   Fix 2   Fix 3   Fix 4   Fix 5          (Fix Slot 1-5)   │
-├─────────────────────────────────────────────────────────────────────────┤
-│         [ Z ]   [ X ]   [ C ]   [ V ]   [ B ]       <- Row 4: Toolbox   │
-│         Wrench  FireEx  CutVine Rag/Dry WakeUp         (Stage-Aware)    │
-├─────────────────────────────────────────────────────────────────────────┤
-│               [       Space (Hold/Tap)     ]        <- Global Smart Fix!│
-└─────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────┬─────────────────────────────────────────────┐
+│             [ LEFT HAND ]             │                [ RIGHT HAND ]               │
+├───────────────────────────────────────┤─────────────────────────────────────────────┤
+│       [Q]   [W]   [E]   [R]   [T]     │ [Y]   [U]   [I]   [O]   [P]   [ [ ]   [ ] ] │
+│       Fix1  Fix2  Fix3  Fix4  Fix5    │ Chr1  Chr2  Chr3  Chr4  Chr5  Chr6   AutoAsn│
+├───────────────────────────────────────┤─────────────────────────────────────────────┤
+│ [Tab] [A]   [S]   [D]   [F]   [G]     │ [H]   [J]   [K]   [L]   [ ; ]   [ ' ]       │
+│AllAuto Wpn1  Wpn2  Wpn3  Wpn4  Wpn5   │Wrnch  Fire  Saw   Rag   Wake   AutoAsn      │
+├───────────────────────────────────────┤─────────────────────────────────────────────┤
+│       [Z]     [X]       [C]           │                                             │
+│      Brake  PsiBoost  WheelKey        │                                             │
+├───────────────────────────────────────┴─────────────────────────────────────────────┤
+│                        [          Space (Hold / Tap)      ]                         │
+│                    Global Smart Maintenance (with Tool Animation)                   │
+└─────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Quick Modifiers
+### Quick Guide
 
-- **Weapon Controls (`Q ~ T`)**:
-  - **Tap/Hold `Q ~ T`**: Primary weapon action + smart auto-reload
-  - **`Ctrl + Q ~ T`** (or **`Tab`** for all): Toggle **`[AUTO]` mode** (you can still manually override via keyboard/mouse at any time; click the green badge or top banner to cancel)
-  - **`Shift + Q ~ T` / `Alt + Q ~ T`**: Secondary Action 2 / Tertiary Action 3 (sharpen, manual reload, throw spear, crank elevation, etc. — see [docs/DESIGN_EN.md](./docs/DESIGN_EN.md))
-- **Character Dispatch (`1 ~ 6`)**:
-  - **Tap `1 ~ 6` then `Q ~ T`**: Dispatch character to weapon slot (press again to switch cubicles)
-  - **Double-tap `1 ~ 6`** (or `0` / `Backspace`): Recall character to rest
-- **HUD & Config**:
-  - **`F9`**: Show / hide HUD overlay (auto-hides in camp & settlement screens)
-  - **`F10`**: Hot-reload keybindings from `OneWayTickets.KeyboardMod.ini` in the game folder
+- **Left Hand Home Row: Fixed 5-Slot Weapons (`A S D F G`)**
+  - **Tap/Hold `A ~ G`**: Primary weapon action + smart auto-reload
+  - **`Ctrl + A ~ G`** (or **`Tab`** for all): Toggle **`[AUTO]` mode** (override anytime with keyboard/mouse; click the green badge or status panel above the Toolbox to cancel)
+  - **`Shift + A ~ G` / `Alt + A ~ G`**: Secondary Action 2 / Tertiary Action 3 (sharpen, manual reload, throw spear, crank elevation, etc. — see [docs/DESIGN_EN.md](./docs/DESIGN_EN.md))
+- **Left Hand Upper & Lower Rows: Slot Fix (`Q ~ T`) & Driving (`Z X C`)**
+  - **`Q W E R T`**: Quick-fix the weapon slot directly below (`1 ~ 5`)
+  - **`Z` (Hold)**: Pull the caravan brake lever; release to let go
+  - **`X` (Tap/Hold)**: Trigger **Psionic Acceleration Sprint** + pump furnace bellows + push stopped caravan
+  - **`C`**: Reserved Wheel Slot key (JetWheel boost / Push Car)
+- **Right Hand Home & Upper Rows: Toolbox (`H J K L ;`) & Characters (`Y U I O P [` + `'`/`]`)**
+  - **`H J K L ;`**: Visually pulls **Wrench / Extinguisher / Saw / Rag(Drier) / WakeUp** out of the Toolbox, animates it on the target device/character, and puts it back (automatically scales with tool upgrades)
+  - **`'` or `]`**: **One-Key Character Auto-Assign** (assigns idle/fainted characters to optimal weapon slots based on ability scores; **`Ctrl + '` / `Ctrl + ]`** toggles continuous `[AUTO-ASSIGN]`)
+  - **`Y U I O P [`** (`1 ~ 6` also supported): Select character 1~6, then press `A ~ G` (or `Q ~ T`) to dispatch; double-tap or press `Backspace` to recall
+- **HUD & Config**: **`F9`** toggles HUD overlay; **`F10`** hot-reloads `OneWayTickets.KeyboardMod.ini`

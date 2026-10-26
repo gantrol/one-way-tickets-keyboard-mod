@@ -124,7 +124,7 @@ namespace OneWayTickets.KeyboardMod
             return _slots;
         }
 
-        private static bool IsWheelSlot(string slotName)
+        internal static bool IsWheelSlot(string slotName)
         {
             return string.Equals(slotName, WheelSlotName, StringComparison.OrdinalIgnoreCase);
         }

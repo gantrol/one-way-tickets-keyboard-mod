@@ -8,41 +8,60 @@ using UnityEngine.InputSystem;
 namespace OneWayTickets.KeyboardMod
 {
     /// <summary>
-    /// Manages configuration and keybindings for the One Way Tickets Keyboard Mod.
+    /// Manages configuration and two-handed keybindings for the One Way Tickets Keyboard Mod.
     /// Reads and writes 'OneWayTickets.KeyboardMod.ini' in the game root directory.
     /// </summary>
     public sealed class ModConfig
     {
         public static ModConfig Instance { get; private set; } = new ModConfig();
 
-        // Row 1: Character keys (1-6) + Recall key (0 / Backspace)
-        public Key[] CharacterKeys { get; private set; } = new Key[]
-        {
-            Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5, Key.Digit6
-        };
-        public Key CharacterRecallKey { get; private set; } = Key.Digit0;
-        public Key CharacterRecallAltKey { get; private set; } = Key.Backspace;
-
-        // Row 2: Weapon / Device slot keys (Q W E R T for the 5 caravan weapon slots) + Global Auto-Fire toggle (Tab)
+        // =====================================================================
+        // LEFT HAND
+        // =====================================================================
+        // Left Hand Home Row: Weapon / Device slot keys (A S D F G for fixed slots 1-5) + Global Auto-Fire toggle (Tab)
         public Key[] WeaponSlotKeys { get; private set; } = new Key[]
-        {
-            Key.Q, Key.W, Key.E, Key.R, Key.T
-        };
-        public Key GlobalAutoFireToggleKey { get; private set; } = Key.Tab;
-
-        // Row 3: Per-Slot Toolbox Direct Maintenance keys (A S D F G, aligned under Q W E R T)
-        public Key[] SlotMaintainKeys { get; private set; } = new Key[]
         {
             Key.A, Key.S, Key.D, Key.F, Key.G
         };
+        public Key GlobalAutoFireToggleKey { get; private set; } = Key.Tab;
 
-        // Row 4: Specific Tool keys (Z X C V B) + Global Smart Maintenance (Space)
-        public Key ToolWrenchKey { get; private set; } = Key.Z;
-        public Key ToolExtinguisherKey { get; private set; } = Key.X;
-        public Key ToolSawKey { get; private set; } = Key.C;
-        public Key ToolRagKey { get; private set; } = Key.V;
-        public Key ToolWakeUpKey { get; private set; } = Key.B;
+        // Left Hand Upper Row: Per-Slot Toolbox Direct Maintenance keys (Q W E R T, aligned above A S D F G)
+        public Key[] SlotMaintainKeys { get; private set; } = new Key[]
+        {
+            Key.Q, Key.W, Key.E, Key.R, Key.T
+        };
+
+        // Left Hand Lower Row: Driving & Wheel controls (Z = Brake, X = Psionic Boost / Sprint, C = Wheel Slot Reserved)
+        public Key BrakeKey { get; private set; } = Key.Z;
+        public Key PsionicBoostKey { get; private set; } = Key.X;
+        public Key WheelSlotKey { get; private set; } = Key.C;
+
+        // =====================================================================
+        // RIGHT HAND
+        // =====================================================================
+        // Right Hand Home Row: Dedicated Toolbox keys (H J K L ;) + Global Smart Maintenance (Space)
+        public Key ToolWrenchKey { get; private set; } = Key.H;
+        public Key ToolExtinguisherKey { get; private set; } = Key.J;
+        public Key ToolSawKey { get; private set; } = Key.K;
+        public Key ToolRagKey { get; private set; } = Key.L;
+        public Key ToolWakeUpKey { get; private set; } = Key.Semicolon;
         public Key GlobalSmartMaintainKey { get; private set; } = Key.Space;
+
+        // Right Hand Upper Row: Character keys (Y U I O P [) + Secondary Number aliases (1-6)
+        public Key[] CharacterKeys { get; private set; } = new Key[]
+        {
+            Key.Y, Key.U, Key.I, Key.O, Key.P, Key.LeftBracket
+        };
+        public Key[] CharacterAltKeys { get; private set; } = new Key[]
+        {
+            Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5, Key.Digit6
+        };
+        // Character Auto-Assign keys (' on home row and ] on upper row)
+        public Key CharacterAutoAssignKey { get; private set; } = Key.Quote;
+        public Key CharacterAutoAssignAltKey { get; private set; } = Key.RightBracket;
+        // Recall keys (Backspace / 0)
+        public Key CharacterRecallKey { get; private set; } = Key.Backspace;
+        public Key CharacterRecallAltKey { get; private set; } = Key.Digit0;
 
         // System / HUD keys
         public Key ToggleHudOverlayKey { get; private set; } = Key.F9;
@@ -50,6 +69,7 @@ namespace OneWayTickets.KeyboardMod
 
         // Behavioral settings
         public bool ShowHudOverlay { get; set; } = true;
+        public bool EnableToolPullOutAnimation { get; set; } = true;
         public bool AutoClearCharacterSelectionAfterAssign { get; set; } = true;
         public float DoubleTapRecallSeconds { get; set; } = 0.35f;
         public float ManualPlayerAbility { get; set; } = 1.0f;
@@ -110,15 +130,6 @@ namespace OneWayTickets.KeyboardMod
         {
             switch (key)
             {
-                case "CharacterKeys":
-                    CharacterKeys = ParseKeyArray(val, CharacterKeys);
-                    break;
-                case "CharacterRecallKey":
-                    CharacterRecallKey = ParseKey(val, CharacterRecallKey);
-                    break;
-                case "CharacterRecallAltKey":
-                    CharacterRecallAltKey = ParseKey(val, CharacterRecallAltKey);
-                    break;
                 case "WeaponSlotKeys":
                     WeaponSlotKeys = ParseKeyArray(val, WeaponSlotKeys);
                     break;
@@ -127,6 +138,15 @@ namespace OneWayTickets.KeyboardMod
                     break;
                 case "SlotMaintainKeys":
                     SlotMaintainKeys = ParseKeyArray(val, SlotMaintainKeys);
+                    break;
+                case "BrakeKey":
+                    BrakeKey = ParseKey(val, BrakeKey);
+                    break;
+                case "PsionicBoostKey":
+                    PsionicBoostKey = ParseKey(val, PsionicBoostKey);
+                    break;
+                case "WheelSlotKey":
+                    WheelSlotKey = ParseKey(val, WheelSlotKey);
                     break;
                 case "ToolWrenchKey":
                     ToolWrenchKey = ParseKey(val, ToolWrenchKey);
@@ -146,6 +166,24 @@ namespace OneWayTickets.KeyboardMod
                 case "GlobalSmartMaintainKey":
                     GlobalSmartMaintainKey = ParseKey(val, GlobalSmartMaintainKey);
                     break;
+                case "CharacterKeys":
+                    CharacterKeys = ParseKeyArray(val, CharacterKeys);
+                    break;
+                case "CharacterAltKeys":
+                    CharacterAltKeys = ParseKeyArray(val, CharacterAltKeys);
+                    break;
+                case "CharacterAutoAssignKey":
+                    CharacterAutoAssignKey = ParseKey(val, CharacterAutoAssignKey);
+                    break;
+                case "CharacterAutoAssignAltKey":
+                    CharacterAutoAssignAltKey = ParseKey(val, CharacterAutoAssignAltKey);
+                    break;
+                case "CharacterRecallKey":
+                    CharacterRecallKey = ParseKey(val, CharacterRecallKey);
+                    break;
+                case "CharacterRecallAltKey":
+                    CharacterRecallAltKey = ParseKey(val, CharacterRecallAltKey);
+                    break;
                 case "ToggleHudOverlayKey":
                     ToggleHudOverlayKey = ParseKey(val, ToggleHudOverlayKey);
                     break;
@@ -154,6 +192,9 @@ namespace OneWayTickets.KeyboardMod
                     break;
                 case "ShowHudOverlay":
                     if (bool.TryParse(val, out bool showHud)) ShowHudOverlay = showHud;
+                    break;
+                case "EnableToolPullOutAnimation":
+                    if (bool.TryParse(val, out bool anim)) EnableToolPullOutAnimation = anim;
                     break;
                 case "AutoClearCharacterSelectionAfterAssign":
                     if (bool.TryParse(val, out bool autoClear)) AutoClearCharacterSelectionAfterAssign = autoClear;
@@ -174,6 +215,13 @@ namespace OneWayTickets.KeyboardMod
                 return fallback;
             }
             string cleaned = value.Trim();
+            if (cleaned == ";") return Key.Semicolon;
+            if (cleaned == "'") return Key.Quote;
+            if (cleaned == "[") return Key.LeftBracket;
+            if (cleaned == "]") return Key.RightBracket;
+            if (cleaned == ",") return Key.Comma;
+            if (cleaned == ".") return Key.Period;
+            if (cleaned == "/") return Key.Slash;
             if (cleaned.Length == 1 && char.IsDigit(cleaned[0]))
             {
                 cleaned = "Digit" + cleaned;
@@ -192,7 +240,7 @@ namespace OneWayTickets.KeyboardMod
                 return fallback;
             }
             string[] parts = csv.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            List<Key> result = new List<Key>( fallback.Length );
+            List<Key> result = new List<Key>(fallback.Length);
             for (int i = 0; i < fallback.Length; i++)
             {
                 if (i < parts.Length)
@@ -209,6 +257,17 @@ namespace OneWayTickets.KeyboardMod
 
         public static string FormatKeyLabel(Key k)
         {
+            switch (k)
+            {
+                case Key.Semicolon: return ";";
+                case Key.Quote: return "'";
+                case Key.LeftBracket: return "[";
+                case Key.RightBracket: return "]";
+                case Key.Comma: return ",";
+                case Key.Period: return ".";
+                case Key.Slash: return "/";
+                case Key.Backspace: return "Bksp";
+            }
             string s = k.ToString();
             if (s.StartsWith("Digit") && s.Length == 6)
             {
@@ -221,55 +280,62 @@ namespace OneWayTickets.KeyboardMod
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("# ============================================================================");
-            sb.AppendLine("# 《再再启程 One Way Tickets》 全键盘矩阵控制 Mod 配置文件");
+            sb.AppendLine("# 《再再启程 One Way Tickets》 双手人体工学键盘 Mod 配置文件");
             sb.AppendLine("# 修改后可在游戏中按 F10 热重载配置，按 F9 切换屏幕快捷键提示开关");
-            sb.AppendLine("# 鼠标原生操作 100% 保留不变，以下所有快捷键均为纯键盘增强操作");
+            sb.AppendLine("# 鼠标原生操作 100% 保留不变，以下所有快捷键均为双手键盘增强操作");
             sb.AppendLine("# ============================================================================");
             sb.AppendLine();
-            sb.AppendLine("[Characters]");
-            sb.AppendLine("# 第一排：角色选择键 (1-6) 与撤回键 (0 / Backspace)");
-            sb.AppendLine("# 用法：按 1-6 选中角色 -> 再按 Q-T 派驻到对应武器工位；双击 1-6 或按 0/Backspace 撤回；Alt+1-6 替补轮换");
-            sb.AppendLine("CharacterKeys = Digit1, Digit2, Digit3, Digit4, Digit5, Digit6");
-            sb.AppendLine("CharacterRecallKey = Digit0");
-            sb.AppendLine("CharacterRecallAltKey = Backspace");
+            sb.AppendLine("[LeftHand_WeaponsAndDriving]");
+            sb.AppendLine("# 左手主排 (A S D F G)：固定 1-5 号武器槽位主操作（最常用放主排）");
+            sb.AppendLine("#   - 点按/按住 A-G：主操作 + 智能闭环（攻击/开火/空仓装填/蓄力）");
+            sb.AppendLine("#   - Ctrl + A-G（或 Tab 全开）：切换武器【自动托管 [AUTO]】");
+            sb.AppendLine("#   - Shift + A-G：独立副操作 2 | Alt + A-G：独立副操作 3");
+            sb.AppendLine("WeaponSlotKeys = A, S, D, F, G");
+            sb.AppendLine("GlobalAutoFireToggleKey = Tab");
+            sb.AppendLine();
+            sb.AppendLine("# 左手上排 (Q W E R T)：固定 1-5 号槽位一键定点抢修（与下方 A-G 一一对应）");
+            sb.AppendLine("SlotMaintainKeys = Q, W, E, R, T");
+            sb.AppendLine();
+            sb.AppendLine("# 左手下排 (Z X C)：刹车、灵能加速/冲刺、车轮槽保留键");
+            sb.AppendLine("BrakeKey = Z");
+            sb.AppendLine("PsionicBoostKey = X");
+            sb.AppendLine("WheelSlotKey = C");
+            sb.AppendLine("ManualPlayerAbility = 1.0");
+            sb.AppendLine();
+            sb.AppendLine("[RightHand_Toolbox]");
+            sb.AppendLine("# 右手主排 (H J K L ;)：工具箱专项操作（最常用放主排，自动拎出工具并放回）");
+            sb.AppendLine("#   - H：扳手 / 车载维修包");
+            sb.AppendLine("#   - J：灭火器");
+            sb.AppendLine("#   - K：手锯 / 剪刀 / 电锯（自动优先切最外层藤蔓）");
+            sb.AppendLine("#   - L：抹布 / 拖把 / 吹风筒（吹风筒阶段自动全车吹干）");
+            sb.AppendLine("#   - Semicolon (;)：唤醒工具 / 除颤仪 AED（AED 阶段自动全车唤醒）");
+            sb.AppendLine("#   - Space（空格）：全局智能一键抢修");
+            sb.AppendLine("ToolWrenchKey = H");
+            sb.AppendLine("ToolExtinguisherKey = J");
+            sb.AppendLine("ToolSawKey = K");
+            sb.AppendLine("ToolRagKey = L");
+            sb.AppendLine("ToolWakeUpKey = Semicolon");
+            sb.AppendLine("GlobalSmartMaintainKey = Space");
+            sb.AppendLine("EnableToolPullOutAnimation = true");
+            sb.AppendLine();
+            sb.AppendLine("[RightHand_Characters]");
+            sb.AppendLine("# 右手上排 (Y U I O P [)：1-6 号角色选择与派驻（同时兼容数字键 1-6）");
+            sb.AppendLine("#   - 按 Y-[（或 1-6）选中角色 -> 再按左手 A-G（或 Q-T）派驻到对应槽位工位");
+            sb.AppendLine("#   - 按 '（分号右侧引号键）或 ]：一键智能最优分配所有人物（Ctrl+' 切换持续自动分配托管）");
+            sb.AppendLine("#   - 双击角色键或按 Backspace / 0：撤回角色休息 | Alt + 角色键：与替补轮换");
+            sb.AppendLine("CharacterKeys = Y, U, I, O, P, LeftBracket");
+            sb.AppendLine("CharacterAltKeys = Digit1, Digit2, Digit3, Digit4, Digit5, Digit6");
+            sb.AppendLine("CharacterAutoAssignKey = Quote");
+            sb.AppendLine("CharacterAutoAssignAltKey = RightBracket");
+            sb.AppendLine("CharacterRecallKey = Backspace");
+            sb.AppendLine("CharacterRecallAltKey = Digit0");
             sb.AppendLine("AutoClearCharacterSelectionAfterAssign = true");
             sb.AppendLine("DoubleTapRecallSeconds = 0.35");
             sb.AppendLine();
-            sb.AppendLine("[Weapons]");
-            sb.AppendLine("# 第二排：武器/设备槽位键 (Q W E R T，从左到右固定对应 1-5 号设备槽位)");
-            sb.AppendLine("# 用法：");
-            sb.AppendLine("#   - 按住 Q-T：主操作 + 智能循环（自动索敌旋转 + 开火攻击 + 空仓自动装填 + 蓄力）");
-            sb.AppendLine("#   - Ctrl + Q-T：切换该槽位武器【后台自动开火/自动装填托管 [AUTO]】");
-            sb.AppendLine("#   - Tab：一键切换所有武器【全局自动托管】");
-            sb.AppendLine("#   - Shift + Q-T：独立操作 2（手动提前装填 / 投矛远程投掷 / 大剑磨刀 / 箭袋切换 / 战鼓右槌）");
-            sb.AppendLine("#   - Alt + Q-T：独立操作 3（加特林搬运弹药 / 火炮与绞盘手摇旋转 / 左轮退弹）");
-            sb.AppendLine("WeaponSlotKeys = Q, W, E, R, T");
-            sb.AppendLine("GlobalAutoFireToggleKey = Tab");
-            sb.AppendLine("ManualPlayerAbility = 1.0");
-            sb.AppendLine();
-            sb.AppendLine("[Toolbox]");
-            sb.AppendLine("# 第三排：按槽位直接维护键 (A S D F G，与上方 Q W E R T 1-5 号槽垂直对齐)");
-            sb.AppendLine("# 用法：按住 A-G 直接对上方对应槽位设备执行【修缮破损 / 灭火 / 安全剪除最上层藤蔓 / 擦水擦酸 / 拍醒停滞】");
-            sb.AppendLine("SlotMaintainKeys = A, S, D, F, G");
-            sb.AppendLine();
-            sb.AppendLine("# 第四排：按工具类别维护键 (Z X C V B) 与全局智能抢修键 (Space)");
-            sb.AppendLine("#   - Z (扳手)：自动修缮全车破损设备");
-            sb.AppendLine("#   - X (灭火器)：自动扑灭全车着火设备");
-            sb.AppendLine("#   - C (锯子/剪刀)：自动安全切除全车最表层藤蔓（不触发底层藤蔓扣血惩罚）");
-            sb.AppendLine("#   - V (抹布/拖把)：自动擦除全车水滴与酸液");
-            sb.AppendLine("#   - B (唤醒工具)：自动唤醒全车昏迷角色（也可按住 B + 1-6 指定唤醒某位角色）");
-            sb.AppendLine("#   - Space (空格)：全局智能抢修（按住空格自动按紧急度处理全车所有异常与昏迷！）");
-            sb.AppendLine("ToolWrenchKey = Z");
-            sb.AppendLine("ToolExtinguisherKey = X");
-            sb.AppendLine("ToolSawKey = C");
-            sb.AppendLine("ToolRagKey = V");
-            sb.AppendLine("ToolWakeUpKey = B");
-            sb.AppendLine("GlobalSmartMaintainKey = Space");
-            sb.AppendLine();
-            sb.AppendLine("[System]");
+            sb.AppendLine("[HUD]");
+            sb.AppendLine("ShowHudOverlay = true");
             sb.AppendLine("ToggleHudOverlayKey = F9");
             sb.AppendLine("ReloadConfigKey = F10");
-            sb.AppendLine("ShowHudOverlay = true");
 
             File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
         }

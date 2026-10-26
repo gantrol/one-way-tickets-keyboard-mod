@@ -356,11 +356,12 @@ namespace OneWayTickets.KeyboardMod
             string devName = KeyboardToolboxController.GetDeviceDisplayName(device);
             string maintKeyLabel = slotIndex < ModConfig.Instance.SlotMaintainKeys.Length
                 ? ModConfig.FormatKeyLabel(ModConfig.Instance.SlotMaintainKeys[slotIndex])
-                : "A-H";
+                : "Q-T";
+            string wrenchKeyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.ToolWrenchKey);
 
             if (!device.is_validate)
             {
-                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 设备已损毁！请按 [{maintKeyLabel}] 或 [Z] 扳手抢修");
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 设备已损毁！请按 [{maintKeyLabel}] 或 [{wrenchKeyLabel}] 扳手抢修");
                 return;
             }
 

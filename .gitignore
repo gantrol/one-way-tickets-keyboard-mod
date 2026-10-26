@@ -1,0 +1,17 @@
+# Binaries & build outputs
+bin/
+obj/
+*.dll
+*.pdb
+
+# IDE & Editor
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.DotSettings.user
+
+# OS
+Thumbs.db
+.DS_Store

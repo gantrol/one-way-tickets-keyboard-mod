@@ -8,10 +8,16 @@ A non-destructive keyboard control and Quality-of-Life (QoL) mod for **One Way T
 
 ## Key Features
 
-1. **Instant Toolbox Actions Without Opening or Dragging (Core QoL)**
-   - **Hold `Space` for Global Smart Maintenance**: Automatically prioritizes waking stunned characters, extinguishing fires, neutralizing acid, wiping water, cutting vines, kicking sleeping devices, and repairing the lowest-HP device with the wrench.
-   - **Hold `A / S / D / F / G / H` for Per-Slot Maintenance**: Directly clears emergencies and repairs the device in Slot 1–6 (vertically aligned with `Q / W / E / R / T / Y` above).
-   - **Tap or Hold `Z / X / C / V / B` for Dedicated Tools**: Wrench & Caravan Repair Kit (`Z`), Extinguisher for fire (`X`), Saw/Scissors for vines (`C`), Rag/Mop for water/acid (`V`), and Wake-up tool (`B`, or `B + 1~6` to wake a specific character).
+1. **Instant Toolbox Actions Without Opening or Dragging (Stage-Aware QoL)**
+   - **Tap or Hold `Space` for Global Smart Maintenance**: Automatically prioritizes waking stunned characters, extinguishing fires, neutralizing acid, wiping water, cutting vines, kicking sleeping devices, and repairing broken/damaged devices.
+   - **Tap or Hold `A / S / D / F / G / H` for Fixed-Slot Maintenance**: Maps strictly to **Fixed Caravan Slots 1–6** from left to right (keys never shift even if some slots are empty, staying 100% aligned with `Q / W / E / R / T / Y` above).
+   - **Tap or Hold `Z / X / C / V / B` for Stage-Aware Dedicated Tools**:
+     - `Z` (Wrench & Caravan Repair Kit): Scales with Wrench upgrade stages (single-way, ratchet, auto-wrench) and automatically triggers the Caravan Repair Kit on damaged devices/hull when no device is at 0 HP.
+     - `X` (Extinguisher): Uses your current extinguisher efficiency to put out fires.
+     - `C` (Hand Saw -> Scissors -> Chainsaw -> Circular Saw): Always cuts top-most vines first (zero wrong-order HP penalty) and scales cutting speed with your saw stage.
+     - `V` (Rag -> Big Rag -> Mop -> Hairdryer/Drier): Early stages wipe droplets/acid on one device at a time; once upgraded to the **Drier (`Lv3`)**, pressing `V` **blows dry all devices across the entire caravan simultaneously**!
+     - `B` (Inflating Hammer -> Screaming Chicken -> Clock/Tweeter -> AED): Early stages wake one comatose character at a time (or `B + 1~6` for a specific character); once upgraded to the **AED (`Lv3`)**, pressing `B` **wakes all comatose characters simultaneously**!
+   - **Instant Visual & Audio Key Feedback**: Every key press highlights the target slot badge in gold (`▶ 1号 抢修[A]!` / `▶ 1号 操控[Q]!`), plays the tool's native SFX, and displays the exact key, tool stage name, and target device in the top banner.
 
 2. **Full Keyboard Weapon Control (1–3 Actions + Manual Override During `[AUTO]`)**
    - **Primary Action & Smart Loop (Tap/Hold `Q / W / E / R / T / Y`)**:

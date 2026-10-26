@@ -25,10 +25,13 @@ namespace OneWayTickets.KeyboardMod
 
         private float _tickAccumulator;
         private GUIStyle _badgeStyle;
+        private GUIStyle _activeBadgeStyle;
         private GUIStyle _autoBadgeButtonStyle;
         private GUIStyle _statusBarStyle;
+        private GUIStyle _toastPopupStyle;
         private GUIStyle _autoCancelBannerStyle;
         private Texture2D _darkBgTex;
+        private Texture2D _activeBgTex;
         private Texture2D _autoBgTex;
 
         private string _systemStatusMessage = string.Empty;
@@ -180,15 +183,15 @@ namespace OneWayTickets.KeyboardMod
             string smartHint = (inCombat && _toolboxController.IsGlobalSmartMaintaining) ? " 【空格：全局抢修中】" : string.Empty;
 
             string barText = string.IsNullOrEmpty(activeToast)
-                ? $"[键盘Mod] 1-6:选人派驻 | Q-Y:武器(Shift副/Alt三/Ctrl托管/Tab全托管) | A-H:抢修 | ZXCVB:工具 | Space:全修 | F9:隐藏{charHint}{smartHint}"
-                : $"[键盘Mod] {activeToast}{charHint}{smartHint}";
+                ? $"[键盘Mod] 1-6:选人派驻 | Q-Y:固定槽位1-6武器(Shift副/Alt三/Ctrl托管/Tab全托管) | A-H:对应槽位抢修 | ZXCVB:工具箱 | Space:全修 | F9:隐藏{charHint}{smartHint}"
+                : $"⌨ {activeToast}{charHint}{smartHint}";
 
             // Center horizontally so we never overlap the top-left Relic bar or top-right Caravan HP bar
             float maxWidth = Mathf.Max(420f, Screen.width - 680f);
             float width = Mathf.Min(maxWidth, 980f);
             float x = (Screen.width - width) * 0.5f;
             Rect barRect = new Rect(x, 6f, width, 24f);
-            GUI.Box(barRect, barText, _statusBarStyle);
+            GUI.Box(barRect, barText, string.IsNullOrEmpty(activeToast) ? _statusBarStyle : _toastPopupStyle);
 
             // Prominent interactive banner when any weapon has [AUTO] enabled
             if (inCombat && _weaponController.HasAnyAutoFireEnabled())
@@ -213,16 +216,12 @@ namespace OneWayTickets.KeyboardMod
             }
 
             Camera uiCam = sceneRoot.uiCamera;
+            float now = Time.unscaledTime;
 
             for (int i = 0; i < slots.Count && i < 6; i++)
             {
                 ResolvedDeviceSlot slot = slots[i];
-                if (slot.Device == null || slot.PanelTransform == null || slot.UiView == null)
-                {
-                    continue;
-                }
-
-                if (!slot.UiView.gameObject.activeInHierarchy || !slot.PanelTransform.gameObject.activeInHierarchy)
+                if (slot.PanelTransform == null || !slot.PanelTransform.gameObject.activeInHierarchy)
                 {
                     continue;
                 }
@@ -244,20 +243,49 @@ namespace OneWayTickets.KeyboardMod
                 string wKey = i < cfg.WeaponSlotKeys.Length ? ModConfig.FormatKeyLabel(cfg.WeaponSlotKeys[i]) : "?";
                 string mKey = i < cfg.SlotMaintainKeys.Length ? ModConfig.FormatKeyLabel(cfg.SlotMaintainKeys[i]) : "?";
 
+                bool isKeyActiveOnSlot =
+                    _weaponController.IsSlotHoldingAnyAction(i) ||
+                    _toolboxController.IsSlotMaintaining(i) ||
+                    (_weaponController.LastTargetSlotIndex == i && now - _weaponController.LastTargetSlotTime < 0.45f) ||
+                    (_toolboxController.LastTargetSlotIndex == i && now - _toolboxController.LastTargetSlotTime < 0.45f) ||
+                    (_charController.LastTargetSlotIndex == i && now - _charController.LastTargetSlotTime < 0.45f);
+
+                // Fixed empty slot badge
+                if (slot.Device == null || slot.UiView == null || !slot.UiView.gameObject.activeInHierarchy)
+                {
+                    GUIStyle emptyStyle = isKeyActiveOnSlot ? _activeBadgeStyle : _badgeStyle;
+                    if (!isKeyActiveOnSlot)
+                    {
+                        _badgeStyle.normal.textColor = new Color(0.62f, 0.65f, 0.72f);
+                    }
+                    Rect emptyRect = new Rect(screenPos.x - 56f, guiY, 112f, 22f);
+                    string emptyText = isKeyActiveOnSlot ? $"▶ {i + 1}号[{wKey}]:空槽" : $"{i + 1}号[{wKey}] 空槽";
+                    GUI.Box(emptyRect, emptyText, emptyStyle);
+                    continue;
+                }
+
                 bool isAuto = _weaponController.IsSlotAutoFireEnabled(i);
                 bool hasEmergency = !slot.Device.is_validate ||
                                     (slot.Device.device_emergency != null && !slot.Device.device_emergency.removed);
 
-                if (hasEmergency)
+                if (isKeyActiveOnSlot)
+                {
+                    Rect activeRect = new Rect(screenPos.x - 74f, guiY, 148f, 22f);
+                    string activeAction = _toolboxController.IsSlotMaintaining(i) || (_toolboxController.LastTargetSlotIndex == i && now - _toolboxController.LastTargetSlotTime < 0.45f)
+                        ? $"▶ {i + 1}号 抢修[{mKey}]!"
+                        : $"▶ {i + 1}号 操控[{wKey}]!";
+                    GUI.Box(activeRect, activeAction, _activeBadgeStyle);
+                }
+                else if (hasEmergency)
                 {
                     _badgeStyle.normal.textColor = new Color(1f, 0.45f, 0.25f);
-                    Rect badgeRect = new Rect(screenPos.x - 68f, guiY, 136f, 22f);
-                    GUI.Box(badgeRect, $"[{wKey}] ⚠抢修:[{mKey}]", _badgeStyle);
+                    Rect badgeRect = new Rect(screenPos.x - 72f, guiY, 144f, 22f);
+                    GUI.Box(badgeRect, $"{i + 1}号[{wKey}] ⚠抢修:[{mKey}]", _badgeStyle);
                 }
                 else if (isAuto)
                 {
-                    Rect badgeRect = new Rect(screenPos.x - 86f, guiY, 172f, 22f);
-                    string autoLabel = $"🟢[{wKey}:自动] Ctrl+{wKey}关 | 修:{mKey}";
+                    Rect badgeRect = new Rect(screenPos.x - 88f, guiY, 176f, 22f);
+                    string autoLabel = $"🟢{i + 1}号[{wKey}:自动] Ctrl+{wKey}关|修:{mKey}";
                     if (GUI.Button(badgeRect, autoLabel, _autoBadgeButtonStyle))
                     {
                         _weaponController.ToggleSlotAutoFire(i);
@@ -266,8 +294,8 @@ namespace OneWayTickets.KeyboardMod
                 else
                 {
                     _badgeStyle.normal.textColor = new Color(0.92f, 0.95f, 1f);
-                    Rect badgeRect = new Rect(screenPos.x - 62f, guiY, 124f, 22f);
-                    GUI.Box(badgeRect, $"[{wKey}] 修:[{mKey}]", _badgeStyle);
+                    Rect badgeRect = new Rect(screenPos.x - 68f, guiY, 136f, 22f);
+                    GUI.Box(badgeRect, $"{i + 1}号[{wKey}] 修:[{mKey}]", _badgeStyle);
                 }
             }
         }
@@ -314,6 +342,13 @@ namespace OneWayTickets.KeyboardMod
                 _darkBgTex.Apply();
             }
 
+            if (_activeBgTex == null)
+            {
+                _activeBgTex = new Texture2D(1, 1);
+                _activeBgTex.SetPixel(0, 0, new Color(0.32f, 0.24f, 0.06f, 0.94f));
+                _activeBgTex.Apply();
+            }
+
             if (_autoBgTex == null)
             {
                 _autoBgTex = new Texture2D(1, 1);
@@ -331,6 +366,19 @@ namespace OneWayTickets.KeyboardMod
                     padding = new RectOffset(4, 4, 2, 2)
                 };
                 _badgeStyle.normal.background = _darkBgTex;
+            }
+
+            if (_activeBadgeStyle == null)
+            {
+                _activeBadgeStyle = new GUIStyle(GUI.skin.box)
+                {
+                    fontSize = 13,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter,
+                    padding = new RectOffset(4, 4, 2, 2)
+                };
+                _activeBadgeStyle.normal.background = _activeBgTex;
+                _activeBadgeStyle.normal.textColor = new Color(1f, 0.92f, 0.35f);
             }
 
             if (_autoBadgeButtonStyle == null)
@@ -360,6 +408,19 @@ namespace OneWayTickets.KeyboardMod
                 };
                 _statusBarStyle.normal.background = _darkBgTex;
                 _statusBarStyle.normal.textColor = new Color(0.95f, 0.92f, 0.72f);
+            }
+
+            if (_toastPopupStyle == null)
+            {
+                _toastPopupStyle = new GUIStyle(GUI.skin.box)
+                {
+                    fontSize = 14,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter,
+                    padding = new RectOffset(10, 10, 3, 3)
+                };
+                _toastPopupStyle.normal.background = _activeBgTex;
+                _toastPopupStyle.normal.textColor = new Color(1f, 0.95f, 0.45f);
             }
 
             if (_autoCancelBannerStyle == null)

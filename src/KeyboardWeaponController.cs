@@ -35,6 +35,8 @@ namespace OneWayTickets.KeyboardMod
 
         public string LastActionStatus { get; private set; } = string.Empty;
         public float LastActionStatusTime { get; private set; }
+        public int LastTargetSlotIndex { get; private set; } = -1;
+        public float LastTargetSlotTime { get; private set; }
 
         public KeyboardWeaponController(DeviceSlotResolver slotResolver, KeyboardCharacterController charController)
         {
@@ -86,13 +88,23 @@ namespace OneWayTickets.KeyboardMod
                 return;
             }
 
-            _autoFireToggles[slotIndex] = !_autoFireToggles[slotIndex];
+            MarkSlotFeedback(slotIndex);
             ModConfig cfg = ModConfig.Instance;
             string keyLabel = slotIndex < cfg.WeaponSlotKeys.Length
                 ? ModConfig.FormatKeyLabel(cfg.WeaponSlotKeys[slotIndex])
                 : (slotIndex + 1).ToString();
+
+            if (!_slotResolver.TryGetSlot(slotIndex, out ResolvedDeviceSlot slot) || slot.Device == null)
+            {
+                _autoFireToggles[slotIndex] = false;
+                SetStatus($"[Ctrl+{keyLabel}] {slotIndex + 1} 号槽位为空（未安装设备）");
+                return;
+            }
+
+            _autoFireToggles[slotIndex] = !_autoFireToggles[slotIndex];
+            string devName = KeyboardToolboxController.GetDeviceDisplayName(slot.Device);
             string stateStr = _autoFireToggles[slotIndex] ? "已开启自动托管 [AUTO]" : "已取消自动托管";
-            SetStatus($"{slotIndex + 1} 号位 [{keyLabel}] {stateStr}");
+            SetStatus($"[Ctrl+{keyLabel} -> {slotIndex + 1}号:{devName}] {stateStr}");
         }
 
         public void CancelAllAutoFire(string reasonMessage = "已取消全部武器【自动托管】")
@@ -323,12 +335,34 @@ namespace OneWayTickets.KeyboardMod
 
         private void ExecuteSlotPrimaryOnPress(int slotIndex)
         {
-            if (!_slotResolver.TryGetSlot(slotIndex, out ResolvedDeviceSlot slot) || slot.Device == null || !slot.Device.is_validate)
+            MarkSlotFeedback(slotIndex);
+            string keyLabel = slotIndex < ModConfig.Instance.WeaponSlotKeys.Length
+                ? ModConfig.FormatKeyLabel(ModConfig.Instance.WeaponSlotKeys[slotIndex])
+                : (slotIndex + 1).ToString();
+
+            if (!_slotResolver.TryGetSlot(slotIndex, out ResolvedDeviceSlot slot))
             {
+                SetStatus($"[{keyLabel}] 当前车体无 {slotIndex + 1} 号槽位");
+                return;
+            }
+
+            if (slot.Device == null)
+            {
+                SetStatus($"[{keyLabel}] {slotIndex + 1} 号槽位为空（未安装设备）");
                 return;
             }
 
             Device device = slot.Device;
+            string devName = KeyboardToolboxController.GetDeviceDisplayName(device);
+            string maintKeyLabel = slotIndex < ModConfig.Instance.SlotMaintainKeys.Length
+                ? ModConfig.FormatKeyLabel(ModConfig.Instance.SlotMaintainKeys[slotIndex])
+                : "A-H";
+
+            if (!device.is_validate)
+            {
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 设备已损毁！请按 [{maintKeyLabel}] 或 [Z] 扳手抢修");
+                return;
+            }
 
             // Direct manual shooter trigger / reload step (works even when [AUTO] is active and waiting on angle/target)
             if (device is DScript_Shooter shooter)
@@ -339,6 +373,7 @@ namespace OneWayTickets.KeyboardMod
                 if (shooter.CanShoot())
                 {
                     shooter.Try_Shooting(false, null);
+                    SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 手动开火 (弹药 {shooter.current_ammo})");
                 }
                 else
                 {
@@ -349,13 +384,17 @@ namespace OneWayTickets.KeyboardMod
                     shooter.Try_Start_Reloading();
                     shooter.Try_Reloading();
                     shooter.Load_Bullet_Into_Barrel();
+                    SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 手动装填/上膛 (按住 {keyLabel} 持续装填开火)");
                 }
+                return;
             }
 
             // Direct manual melee attacks (covering DScript_Melee, BasicMelee_Click, AnimSharpMelee_Click, NewBasicMelee, Unique_Catching_Flower, etc.)
             if (device is DScript_Melee_Throwing_Spear spear)
             {
                 spear.Try_Melee_Attacking();
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 近战刺击 (Shift+{keyLabel} 远程投矛)");
+                return;
             }
             else if (device is DScript_Melee_Claymore claymore)
             {
@@ -364,6 +403,8 @@ namespace OneWayTickets.KeyboardMod
                 {
                     claymore.Try_Attacking();
                 }
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 蓄力挥砍 (Shift+{keyLabel} 磨刀)");
+                return;
             }
             else if (device is DScript_Melee_Charge meleeCharge)
             {
@@ -372,76 +413,115 @@ namespace OneWayTickets.KeyboardMod
                 {
                     meleeCharge.Try_Attacking();
                 }
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 蓄力运转 (Shift+{keyLabel} 释放重击)");
+                return;
             }
             else if (device is DScript_Melee melee)
             {
                 melee.Try_Attacking();
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 近战攻击！");
+                return;
             }
             else if (device is BasicMelee_Click basicMeleeClick)
             {
                 basicMeleeClick.UI_Controlled_Attack(basicMeleeClick.UI_Atk_Can_Horizontal, null);
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 近战挥击！");
+                return;
             }
             else if (device is NewBasicMelee newBasicMelee)
             {
                 try { _newBasicMeleeAttackMethod?.Invoke(newBasicMelee, null); } catch { }
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 近战攻击！");
+                return;
             }
             else if (device is Unique_Catching_Flower flower)
             {
                 try { _catchingFlowerAttackMethod?.Invoke(flower, null); } catch { }
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 捕食攻击！");
+                return;
             }
             else if (device is Unique_Cactus cactus)
             {
                 cactus.Accelerate();
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 加速运转！");
+                return;
             }
             else if (device is Unique_War_Drum warDrum)
             {
                 warDrum.UI_Controlled_Beating(false);
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 擂鼓助威！");
+                return;
             }
 
             // Helicopter manual attack
             if (device is DScript_Helicopter helicopter)
             {
                 helicopter.TryAttacking();
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 直升机出击！");
+                return;
             }
 
             // Accelerator fuel tap
             if (device is DScript_Accelerator acc)
             {
                 acc.TryAddFuel();
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 添加燃料加速！");
+                return;
             }
 
             // Backup ammo box manual tap
             if (device is DScript_Backup_Ammo backupAmmo)
             {
                 backupAmmo.TryLoad();
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 装填备用弹药！");
+                return;
             }
 
             // Boomerang / CarBomb manual attack
             if (device is DScript_Special_Boomerang boomerang)
             {
                 boomerang.Try_Attacking();
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 投出回旋镖！");
+                return;
             }
             if (device is DScript_Special_CarBomb carBomb)
             {
                 carBomb.Try_Attacking();
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 释放自爆小车！");
+                return;
             }
 
             // BasicWheel Push_Car_btn or JetWheel Accelerate
             if (slot.UiView is JetWheelUiView jetWheelUi)
             {
                 jetWheelUi.Accelerate();
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 喷气车轮加速！");
+                return;
             }
-            else if (slot.UiView is BasicWheelUiView wheelUi && wheelUi.Push_Car_btn != null && wheelUi.Push_Car_btn.interactable)
+            else if (slot.UiView is BasicWheelUiView wheelUi && wheelUi.Push_Car_btn != null)
             {
-                wheelUi.Push_Car_btn.onClick?.Invoke();
+                if (wheelUi.Push_Car_btn.interactable)
+                {
+                    wheelUi.Push_Car_btn.onClick?.Invoke();
+                    SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 推车前进！");
+                }
+                else
+                {
+                    SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 车轮运转中 (按住 {keyLabel} 持续加速)");
+                }
+                return;
             }
             else if (slot.UiView is ShieldGeneratorUiView shieldUi)
             {
                 shieldUi.Raise_Shield();
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 展开能量护盾！");
+                return;
             }
             else if (slot.UiView is Ditto_UiView dittoUi)
             {
                 dittoUi.btn_cast();
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 释放百变怪技能！");
+                return;
             }
 
             // Unique War Drum left stick
@@ -452,9 +532,13 @@ namespace OneWayTickets.KeyboardMod
                     if (addOn is DeviceUIViewAddOn_Unique_Drum drum && drum.left_stick != null)
                     {
                         drum.left_stick.click_action?.Invoke();
+                        SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 战鼓左槌敲击！");
+                        return;
                     }
                 }
             }
+
+            SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 操控设备中");
         }
 
         private void ExecuteSlotManualPrimaryTick(ResolvedDeviceSlot slot, float ability)
@@ -597,20 +681,29 @@ namespace OneWayTickets.KeyboardMod
 
         private void ExecuteSlotAction2OnPress(int slotIndex)
         {
-            if (!_slotResolver.TryGetSlot(slotIndex, out ResolvedDeviceSlot slot) || slot.Device == null || !slot.Device.is_validate)
+            MarkSlotFeedback(slotIndex);
+            string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.WeaponSlotKeys[slotIndex]);
+
+            if (!_slotResolver.TryGetSlot(slotIndex, out ResolvedDeviceSlot slot) || slot.Device == null)
             {
+                SetStatus($"[Shift+{keyLabel}] {slotIndex + 1} 号槽位为空（未安装设备）");
                 return;
             }
 
             Device device = slot.Device;
-            string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.WeaponSlotKeys[slotIndex]);
+            string devName = KeyboardToolboxController.GetDeviceDisplayName(device);
+            if (!device.is_validate)
+            {
+                SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 设备已损毁，无法执行副操作");
+                return;
+            }
 
             // 1. Throwing Spear -> Ranged Spear Throw
             if (device is DScript_Melee_Throwing_Spear spear)
             {
                 InvokeRotateBoneToTarget(spear, "roll_control");
                 spear.Try_Shooting();
-                SetStatus($"[Shift+{keyLabel}] 投矛手：远程投掷！");
+                SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 远程投矛！");
                 return;
             }
 
@@ -620,11 +713,12 @@ namespace OneWayTickets.KeyboardMod
                 if (quiver.CanSwitch())
                 {
                     quiver.ChangeActivate(!quiver.is_activate);
-                    SetStatus($"[Shift+{keyLabel}] 特殊箭袋：{(quiver.is_activate ? "已激活" : "已关闭")}");
+                    SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 特殊箭袋：{(quiver.is_activate ? "已激活" : "已关闭")}");
                 }
                 else
                 {
                     quiver.Try_Loading();
+                    SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 特殊箭袋：装填中");
                 }
                 return;
             }
@@ -633,19 +727,19 @@ namespace OneWayTickets.KeyboardMod
             if (device is DScript_Melee_Claymore claymore)
             {
                 claymore.Try_Sharping(0.15f);
-                SetStatus($"[Shift+{keyLabel}] 大剑：手动打磨锋利度");
+                SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 手动打磨锋利度");
                 return;
             }
             if (device is AnimSharpMelee_Click animSharp)
             {
                 animSharp.Sharpening();
-                SetStatus($"[Shift+{keyLabel}] 近战武器：手动打磨锋利度");
+                SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 手动打磨锋利度");
                 return;
             }
             if (device is BasicMelee_Click basicMeleeClick)
             {
                 basicMeleeClick.UI_Controlled_Sharpen(0.15f);
-                SetStatus($"[Shift+{keyLabel}] 近战武器：手动打磨锋利度");
+                SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 手动打磨锋利度");
                 return;
             }
 
@@ -653,7 +747,7 @@ namespace OneWayTickets.KeyboardMod
             if (device is DScript_Melee_Charge meleeCharge)
             {
                 meleeCharge.Try_Attacking();
-                SetStatus($"[Shift+{keyLabel}] 蓄力近战：释放攻击！");
+                SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 蓄力近战：释放攻击！");
                 return;
             }
 
@@ -663,14 +757,14 @@ namespace OneWayTickets.KeyboardMod
                 if (shooter is DScript_Shooter_Gatlin gatlin)
                 {
                     gatlin.Try_Reloading();
-                    SetStatus($"[Shift+{keyLabel}] 加特林：装填弹药箱");
+                    SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 装填弹药箱");
                 }
                 else
                 {
                     shooter.Try_Start_Reloading();
                     shooter.Try_Reloading();
                     shooter.Load_Bullet_Into_Barrel();
-                    SetStatus($"[Shift+{keyLabel}] 远程武器：手动提前装填/上膛");
+                    SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 手动提前装填/上膛");
                 }
                 return;
             }
@@ -683,7 +777,7 @@ namespace OneWayTickets.KeyboardMod
                     if (addOn is DeviceUIViewAddOn_Unique_Drum drum && drum.right_stick != null)
                     {
                         drum.right_stick.click_action?.Invoke();
-                        SetStatus($"[Shift+{keyLabel}] 战鼓：右槌敲击");
+                        SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 战鼓右槌敲击");
                         return;
                     }
                 }
@@ -693,8 +787,11 @@ namespace OneWayTickets.KeyboardMod
             if (device is DScript_Backup_Ammo backupAmmo)
             {
                 backupAmmo.TryLoad();
-                SetStatus($"[Shift+{keyLabel}] 备用弹药箱：手动装填");
+                SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 备用弹药箱：手动装填");
+                return;
             }
+
+            SetStatus($"[Shift+{keyLabel} -> {slotIndex + 1}号:{devName}] 该设备无独立副操作 (直接按 {keyLabel} 即可操控)");
         }
 
         private void ExecuteSlotAction2Tick(ResolvedDeviceSlot slot, float ability)
@@ -737,53 +834,65 @@ namespace OneWayTickets.KeyboardMod
 
         private void ExecuteSlotAction3OnPress(int slotIndex)
         {
-            if (!_slotResolver.TryGetSlot(slotIndex, out ResolvedDeviceSlot slot) || slot.Device == null || !slot.Device.is_validate)
+            MarkSlotFeedback(slotIndex);
+            string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.WeaponSlotKeys[slotIndex]);
+
+            if (!_slotResolver.TryGetSlot(slotIndex, out ResolvedDeviceSlot slot) || slot.Device == null)
             {
+                SetStatus($"[Alt+{keyLabel}] {slotIndex + 1} 号槽位为空（未安装设备）");
                 return;
             }
 
             Device device = slot.Device;
-            string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.WeaponSlotKeys[slotIndex]);
+            string devName = KeyboardToolboxController.GetDeviceDisplayName(device);
+            if (!device.is_validate)
+            {
+                SetStatus($"[Alt+{keyLabel} -> {slotIndex + 1}号:{devName}] 设备已损毁，无法执行第三操作");
+                return;
+            }
 
             if (device is DScript_Shooter_Gatlin gatlin)
             {
                 gatlin.Try_Carrying();
-                SetStatus($"[Alt+{keyLabel}] 加特林：搬运弹药箱 ({gatlin.carry_count}/{gatlin.carry_limit})");
+                SetStatus($"[Alt+{keyLabel} -> {slotIndex + 1}号:{devName}] 搬运弹药箱 ({gatlin.carry_count}/{gatlin.carry_limit})");
                 return;
             }
 
             if (device is DScript_Shooter_Cannon cannon)
             {
                 cannon.Try_Rotating(1f);
-                SetStatus($"[Alt+{keyLabel}] 火炮：手摇校准俯仰角");
+                SetStatus($"[Alt+{keyLabel} -> {slotIndex + 1}号:{devName}] 手摇校准火炮俯仰角");
                 return;
             }
 
             if (device is DScript_Shooter_Windlass windlass)
             {
                 windlass.Try_Rotating(1f);
-                SetStatus($"[Alt+{keyLabel}] 绞盘弩：手摇绞盘拉弦");
+                SetStatus($"[Alt+{keyLabel} -> {slotIndex + 1}号:{devName}] 手摇绞盘拉弦");
                 return;
             }
 
             if (device is DScript_Ram ram)
             {
                 ram.Try_Rotating(1f);
-                SetStatus($"[Alt+{keyLabel}] 冲角：手摇转向");
+                SetStatus($"[Alt+{keyLabel} -> {slotIndex + 1}号:{devName}] 手摇冲角转向");
                 return;
             }
 
             if (device is DScript_Helicopter)
             {
-                SetStatus($"[Alt+{keyLabel}] 直升机：手摇赋能");
+                SetStatus($"[Alt+{keyLabel} -> {slotIndex + 1}号:{devName}] 直升机手摇赋能");
                 return;
             }
 
             if (device is DScript_Shooter shooter)
             {
                 shooter.Unload_Barrel();
-                SetStatus($"[Alt+{keyLabel}] 远程武器：退出膛内子弹");
+                SetStatus($"[Alt+{keyLabel} -> {slotIndex + 1}号:{devName}] 退出膛内子弹");
+                return;
             }
+
+            SetStatus($"[Alt+{keyLabel} -> {slotIndex + 1}号:{devName}] 该设备无第三操作");
         }
 
         private void ExecuteSlotAction3Tick(ResolvedDeviceSlot slot, float ability)
@@ -834,6 +943,15 @@ namespace OneWayTickets.KeyboardMod
             catch
             {
                 // Ignore if bone does not exist on this specific device variant
+            }
+        }
+
+        private void MarkSlotFeedback(int slotIndex)
+        {
+            if (slotIndex >= 0)
+            {
+                LastTargetSlotIndex = slotIndex;
+                LastTargetSlotTime = Time.unscaledTime;
             }
         }
 

@@ -26,6 +26,8 @@ namespace OneWayTickets.KeyboardMod
 
         public string LastActionStatus { get; private set; } = string.Empty;
         public float LastActionStatusTime { get; private set; }
+        public int LastTargetSlotIndex { get; private set; } = -1;
+        public float LastTargetSlotTime { get; private set; }
 
         public KeyboardCharacterController(DeviceSlotResolver slotResolver)
         {
@@ -186,21 +188,33 @@ namespace OneWayTickets.KeyboardMod
                 return false;
             }
 
+            string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.WeaponSlotKeys[slotIndex]);
+            LastTargetSlotIndex = slotIndex;
+            LastTargetSlotTime = Time.unscaledTime;
+
             if (!selected.StateCanWork())
             {
-                SetStatus("该角色当前处于昏迷/无法工作状态！(按 B 或 Space 唤醒)");
-                return false;
+                SetStatus($"[{keyLabel}] 该角色当前处于昏迷/无法工作状态！(按 B 或 Space 唤醒)");
+                return true;
             }
 
-            if (!_slotResolver.TryGetSlot(slotIndex, out ResolvedDeviceSlot slot) || slot.Device == null)
+            if (!_slotResolver.TryGetSlot(slotIndex, out ResolvedDeviceSlot slot))
             {
-                return false;
+                SetStatus($"[{keyLabel}] 当前车体无 {slotIndex + 1} 号槽位");
+                return true;
+            }
+
+            if (slot.Device == null)
+            {
+                SetStatus($"[{keyLabel}] {slotIndex + 1} 号槽位为空（未安装设备），无法派驻角色");
+                return true;
             }
 
             Device device = slot.Device;
+            string devName = KeyboardToolboxController.GetDeviceDisplayName(device);
             if (device.cubicle_list == null || device.cubicle_list.Count == 0)
             {
-                SetStatus($"{slotIndex + 1} 号位设备无可用工位");
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 该设备无需/无可用工位");
                 if (ModConfig.Instance.AutoClearCharacterSelectionAfterAssign)
                 {
                     charMgr.CancelSelectCharacter();
@@ -210,8 +224,8 @@ namespace OneWayTickets.KeyboardMod
 
             if (!selected.CanWork(device))
             {
-                SetStatus($"该角色无法在 {slotIndex + 1} 号位设备工作");
-                return false;
+                SetStatus($"[{keyLabel} -> {slotIndex + 1}号:{devName}] 该角色无法在此设备工作");
+                return true;
             }
 
             BasicCubicle targetCubicle = ChooseTargetCubicle(device, selected, out int cubicleIdx);
@@ -229,7 +243,7 @@ namespace OneWayTickets.KeyboardMod
             }
 
             string subLabel = device.cubicle_list.Count > 1 ? $" (工位 {cubicleIdx + 1}/{device.cubicle_list.Count})" : string.Empty;
-            SetStatus($"已派驻角色 -> {slotIndex + 1} 号位 [{ModConfig.FormatKeyLabel(ModConfig.Instance.WeaponSlotKeys[slotIndex])}]{subLabel}");
+            SetStatus($"[派驻 -> {slotIndex + 1}号:{devName} ({keyLabel})]{subLabel}");
             return true;
         }
 

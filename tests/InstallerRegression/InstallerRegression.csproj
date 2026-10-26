@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+    <StartupObject>InstallerRegression.Program</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\Installer\InstallerProgram.cs" Link="InstallerProgram.cs" />
+    <Compile Include="..\..\src\Installer\LoaderInstallation.cs" Link="LoaderInstallation.cs" />
+    <EmbeddedResource Include="..\..\dist\OneWayTickets.KeyboardMod.dll" LogicalName="OneWayTickets.KeyboardMod.dll" />
+    <EmbeddedResource Include="..\..\OneWayTickets.KeyboardMod.ini" LogicalName="OneWayTickets.KeyboardMod.ini" />
+    <EmbeddedResource Include="..\..\dist\BepInEx.Loader.zip" LogicalName="BepInEx.Loader.zip" />
+    <EmbeddedResource Include="..\..\docs\BEPINEX_THIRD_PARTY_NOTICES.md" LogicalName="BepInEx.ThirdPartyNotices.md" />
+    <EmbeddedResource Include="..\..\dist\UnityDoorstop.Source.zip" LogicalName="UnityDoorstop.Source.zip" />
+  </ItemGroup>
+</Project>

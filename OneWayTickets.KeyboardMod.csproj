@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>OneWayTickets.KeyboardMod</AssemblyName>
+    <Version>1.1.0</Version>
     <RootNamespace>OneWayTickets.KeyboardMod</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
@@ -13,9 +14,14 @@
 
   <ItemGroup>
     <Compile Remove="src\Installer\**\*.cs" />
+    <Compile Remove="tests\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="BepInEx">
+      <HintPath>$(MSBuildProjectDirectory)\dist\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="World">
       <HintPath>$(GameManagedDir)\World.dll</HintPath>
       <Private>false</Private>
@@ -76,7 +82,7 @@
 
   <Target Name="UpdateDistAndInstallerExe" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(MSBuildProjectDirectory)\dist" />
-    <Exec Command="&quot;$(WINDIR)\Microsoft.NET\Framework64\v4.0.30319\csc.exe&quot; /nologo /target:winexe /optimize+ /out:&quot;$(MSBuildProjectDirectory)\双击一键安装或卸载Mod.exe&quot; /r:&quot;$(MSBuildProjectDirectory)\dist\Mono.Cecil.dll&quot; /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /resource:&quot;$(MSBuildProjectDirectory)\dist\Mono.Cecil.dll&quot;,Mono.Cecil.dll /resource:&quot;$(MSBuildProjectDirectory)\dist\OneWayTickets.KeyboardMod.dll&quot;,OneWayTickets.KeyboardMod.dll /resource:&quot;$(MSBuildProjectDirectory)\OneWayTickets.KeyboardMod.ini&quot;,OneWayTickets.KeyboardMod.ini &quot;$(MSBuildProjectDirectory)\src\Installer\InstallerProgram.cs&quot;" />
+    <Exec Command="&quot;$(WINDIR)\Microsoft.NET\Framework64\v4.0.30319\csc.exe&quot; /nologo /target:winexe /optimize+ /out:&quot;$(MSBuildProjectDirectory)\双击一键安装或卸载Mod.exe&quot; /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll /resource:&quot;$(MSBuildProjectDirectory)\dist\BepInEx.Loader.zip&quot;,BepInEx.Loader.zip /resource:&quot;$(MSBuildProjectDirectory)\dist\UnityDoorstop.Source.zip&quot;,UnityDoorstop.Source.zip /resource:&quot;$(MSBuildProjectDirectory)\docs\BEPINEX_THIRD_PARTY_NOTICES.md&quot;,BepInEx.ThirdPartyNotices.md /resource:&quot;$(MSBuildProjectDirectory)\dist\OneWayTickets.KeyboardMod.dll&quot;,OneWayTickets.KeyboardMod.dll /resource:&quot;$(MSBuildProjectDirectory)\OneWayTickets.KeyboardMod.ini&quot;,OneWayTickets.KeyboardMod.ini &quot;$(MSBuildProjectDirectory)\src\Installer\*.cs&quot;" />
   </Target>
 
 </Project>

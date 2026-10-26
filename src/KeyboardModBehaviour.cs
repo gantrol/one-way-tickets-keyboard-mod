@@ -203,10 +203,13 @@ namespace OneWayTickets.KeyboardMod
             string boostKey = ModConfig.FormatKeyLabel(cfg.PsionicBoostKey);
             string bellowsKey = ModConfig.FormatKeyLabel(cfg.BellowsKey);
             string bellowsHint = (inCombat && _drivingController.IsBlowering) ? $" 【{bellowsKey}：风箱鼓风中】" : string.Empty;
+            string wakeHint = inCombat && _toolboxController.PendingWakeUpCount > 0
+                ? $"【唤醒中：剩余 {_toolboxController.PendingWakeUpCount} 人】 "
+                : string.Empty;
 
             string barText = string.IsNullOrEmpty(activeToast)
-                ? $"工具[{wrenchKey}扳 {extKey}灭 {sawKey}锯 {ragKey}擦 {wakeKey}醒 Space全修] 车[{brakeKey}刹 {boostKey}灵能 {bellowsKey}风箱] 人[Y~[选 {autoCharKey}分配]{charHint}{smartHint}{brakeHint}{bellowsHint}"
-                : $"⌨ {activeToast}{charHint}{smartHint}{brakeHint}{bellowsHint}";
+                ? $"{wakeHint}工具[{wrenchKey}扳 {extKey}灭 {sawKey}锯 {ragKey}擦 {wakeKey}醒 Space全修] 车[{brakeKey}刹 {boostKey}灵能 {bellowsKey}风箱] 人[Y~[选 {autoCharKey}分配]{charHint}{smartHint}{brakeHint}{bellowsHint}"
+                : $"⌨ {wakeHint}{activeToast}{charHint}{smartHint}{brakeHint}{bellowsHint}";
 
             Vector2 anchorGuiPos = GetToolboxAreaAnchorGuiPos(sceneRoot);
             float boxWidth = Mathf.Clamp(Screen.width * 0.28f, 380f, 520f);

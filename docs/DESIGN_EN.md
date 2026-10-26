@@ -37,7 +37,9 @@ Decompiling `World.dll`, `AutoCodes.dll`, and scene assets confirmed that every 
 | **`J`** | **Extinguisher (All Stages)** | Uses current extinguisher efficiency to put out burning devices |
 | **`K`** | **Hand Saw (`Lv0`) → Scissors (`Lv1`) → Chainsaw (`Lv2`) → Circular Saw (`Lv3`)** | Always cuts top-most vines first (`upper_vines.Count == 0`, zero wrong-order HP penalty) and scales cutting speed with saw stage |
 | **`L`** | **Rag (`Lv0`) → Big Rag (`Lv1`) → Mop (`Lv2`) → Drier (`Lv3`)** | **Early stages**: Wipes droplets/acid on one device without aiming;<br>**Drier (`Lv3`)**: Pressing `L` **blows dry all devices across the entire caravan simultaneously**! |
-| **`;`** | **Hammer (`Lv0`) → Chicken (`Lv1`) → Clock (`Lv2`) → AED (`Lv3`)** | **Early stages**: Wakes one comatose character at a time (or `; + Y~[` for a specific character);<br>**AED (`Lv3`)**: Pressing `;` **wakes all comatose characters simultaneously**! |
+| **`;`** | **Hammer (`Lv0`) → Chicken (`Lv1`) → Clock (`Lv2`) → Tweeter (`Lv3`) → AED (`Lv4`)** | A tap continues waking the current group: earlier tools work sequentially; AED affects all targets together. Use `; + Y~[` to choose one or more characters. Shows the remaining count and stops only after each target actually wakes, including after key release. |
+
+Each tool use only reduces coma duration. Both `;` and `Space` retry until the game removes every target's coma state, rather than treating a tool trigger as success. Holding the key also handles characters who fall unconscious afterward.
 
 ---
 
@@ -78,6 +80,8 @@ Decompiling `World.dll`, `AutoCodes.dll`, and scene assets confirmed that every 
 ---
 
 ## 6. Building from Source (Developers Only)
+
+The mod is a BepInEx plugin in `BepInEx/plugins/OneWayTickets.KeyboardMod/`. `KeyboardModPlugin.Awake()` calls `ModEntryPoint.EnsureInitialized()` on Unity's main thread. It creates its own persistent behaviour without modifying `World.dll` or patching game methods. The installer bundles official BepInEx 5.4.23.6 for Windows x64 and only manages its own loader and plugin files. It preserves user configuration, other mods, and shared loaders on uninstall.
 
 End users only need to run the standalone installer `双击一键安装或卸载Mod.exe`. To rebuild from source after editing `src/*.cs`:
 

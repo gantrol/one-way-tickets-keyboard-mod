@@ -6,14 +6,12 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Win32;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 
 [assembly: AssemblyTitle("《再再启程》键盘减负 Mod 一键安装器")]
 [assembly: AssemblyDescription("《再再启程 One Way Tickets》双手键盘与减负辅助 Mod 一键安装/卸载工具")]
 [assembly: AssemblyProduct("OneWayTickets.KeyboardMod.Installer")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
 
 namespace OneWayTickets.KeyboardMod.Installer
 {
@@ -24,8 +22,6 @@ namespace OneWayTickets.KeyboardMod.Installer
         [STAThread]
         private static int Main(string[] args)
         {
-            AppDomain.CurrentDomain.AssemblyResolve += OnResolveEmbeddedAssembly;
-
             // Command-line silent mode support:
             //   --install [gameRoot]
             //   --uninstall [gameRoot]
@@ -81,20 +77,6 @@ namespace OneWayTickets.KeyboardMod.Installer
             return 0;
         }
 
-        private static Assembly OnResolveEmbeddedAssembly(object sender, ResolveEventArgs args)
-        {
-            AssemblyName requested = new AssemblyName(args.Name);
-            if (string.Equals(requested.Name, "Mono.Cecil", StringComparison.OrdinalIgnoreCase))
-            {
-                byte[] raw = ReadEmbeddedResource("Mono.Cecil.dll");
-                if (raw != null)
-                {
-                    return Assembly.Load(raw);
-                }
-            }
-            return null;
-        }
-
         internal static byte[] ReadEmbeddedResource(string resourceName)
         {
             Assembly exeAsm = Assembly.GetExecutingAssembly();
@@ -129,11 +111,12 @@ namespace OneWayTickets.KeyboardMod.Installer
 
         internal static bool IsModInstalled(string gameRoot)
         {
-            if (!IsValidGameRoot(gameRoot)) return false;
-            string managedDir = Path.Combine(gameRoot, @"One Way Tickets_Data\Managed");
-            string modDll = Path.Combine(managedDir, "OneWayTickets.KeyboardMod.dll");
-            string worldBak = Path.Combine(managedDir, "World.dll.bak");
-            return File.Exists(modDll) && File.Exists(worldBak);
+            return IsValidGameRoot(gameRoot) && LoaderInstallation.IsInstalled(gameRoot);
+        }
+
+        internal static bool HasModFiles(string gameRoot)
+        {
+            return IsValidGameRoot(gameRoot) && LoaderInstallation.HasFiles(gameRoot);
         }
 
         internal static string ResolveGameRoot(string explicitPath, bool promptIfNotFound)
@@ -305,231 +288,17 @@ namespace OneWayTickets.KeyboardMod.Installer
         internal static string PerformInstall(string gameRoot)
         {
             if (!IsValidGameRoot(gameRoot))
-            {
-                throw new InvalidOperationException("所选文件夹不是有效的《再再启程 One Way Tickets》游戏目录（未找到 One Way Tickets_Data\\Managed\\World.dll）。");
-            }
-
-            string managedDir = Path.Combine(gameRoot, @"One Way Tickets_Data\Managed");
-            string worldDll = Path.Combine(managedDir, "World.dll");
-            string worldBak = Path.Combine(managedDir, "World.dll.bak");
-            string targetModDll = Path.Combine(managedDir, "OneWayTickets.KeyboardMod.dll");
-
-            // Prefer external dist\OneWayTickets.KeyboardMod.dll if present next to exe, otherwise use embedded resource
-            string exeDir = AppDomain.CurrentDomain.BaseDirectory;
-            string externalDistDll = Path.Combine(exeDir, @"dist\OneWayTickets.KeyboardMod.dll");
-            string externalSameDirDll = Path.Combine(exeDir, "OneWayTickets.KeyboardMod.dll");
-
-            byte[] modBytes = null;
-            if (File.Exists(externalDistDll))
-            {
-                modBytes = File.ReadAllBytes(externalDistDll);
-            }
-            else if (File.Exists(externalSameDirDll))
-            {
-                modBytes = File.ReadAllBytes(externalSameDirDll);
-            }
-            else
-            {
-                modBytes = ReadEmbeddedResource("OneWayTickets.KeyboardMod.dll");
-            }
-
-            if (modBytes == null || modBytes.Length == 0)
-            {
-                throw new InvalidOperationException("未找到内置或外部的 OneWayTickets.KeyboardMod.dll。");
-            }
-
-            // Step 1: Ensure we have a clean backup of World.dll
-            // Check if current World.dll is already patched; if not, back it up when World.dll.bak doesn't exist
-            if (!File.Exists(worldBak))
-            {
-                File.Copy(worldDll, worldBak, true);
-            }
-
-            // Step 2: Write OneWayTickets.KeyboardMod.dll
-            try
-            {
-                File.WriteAllBytes(targetModDll, modBytes);
-            }
-            catch (IOException ex)
-            {
-                throw new IOException("无法写入 Mod 文件，请先关闭正在运行的《再再启程》游戏后再点击安装！\n详情: " + ex.Message, ex);
-            }
-
-            // Step 3: Patch World.dll from clean World.dll.bak using Mono.Cecil
-            string tempPatched = Path.Combine(managedDir, "World.dll.patched");
-            PatchWorldDllWithCecil(managedDir, worldBak, targetModDll, tempPatched);
-
-            try
-            {
-                if (File.Exists(worldDll))
-                {
-                    File.Delete(worldDll);
-                }
-                File.Move(tempPatched, worldDll);
-            }
-            catch (IOException ex)
-            {
-                throw new IOException("无法替换 World.dll，请先关闭正在运行的《再再启程》游戏后再试！\n详情: " + ex.Message, ex);
-            }
-
-            // Step 4: Write default INI config if not already present in game root
-            string targetIni = Path.Combine(gameRoot, "OneWayTickets.KeyboardMod.ini");
-            if (!File.Exists(targetIni))
-            {
-                string externalIni = Path.Combine(exeDir, "OneWayTickets.KeyboardMod.ini");
-                if (File.Exists(externalIni))
-                {
-                    File.Copy(externalIni, targetIni, false);
-                }
-                else
-                {
-                    byte[] iniBytes = ReadEmbeddedResource("OneWayTickets.KeyboardMod.ini");
-                    if (iniBytes != null && iniBytes.Length > 0)
-                    {
-                        File.WriteAllBytes(targetIni, iniBytes);
-                    }
-                }
-            }
-
-            return "安装成功！\n\n"
-                + "• 游戏目录: " + gameRoot + "\n"
-                + "• 已注入模块: OneWayTickets.KeyboardMod.dll\n"
-                + "• 原版备份: World.dll.bak\n"
-                + "• 改键配置: OneWayTickets.KeyboardMod.ini\n\n"
-                + "现在可以直接启动《再再启程》体验双手键盘操作了！";
-        }
-
-        private static void PatchWorldDllWithCecil(string managedDir, string sourceWorldBak, string modDllPath, string outputPatchedPath)
-        {
-            DefaultAssemblyResolver resolver = new DefaultAssemblyResolver();
-            resolver.AddSearchDirectory(managedDir);
-
-            ReaderParameters readParams = new ReaderParameters();
-            readParams.AssemblyResolver = resolver;
-
-            using (AssemblyDefinition worldAsm = AssemblyDefinition.ReadAssembly(sourceWorldBak, readParams))
-            using (AssemblyDefinition modAsm = AssemblyDefinition.ReadAssembly(modDllPath, readParams))
-            {
-                TypeDefinition entryType = modAsm.MainModule.GetType("OneWayTickets.KeyboardMod.ModEntryPoint");
-                if (entryType == null)
-                {
-                    throw new InvalidOperationException("OneWayTickets.KeyboardMod.ModEntryPoint not found in Mod DLL.");
-                }
-
-                MethodDefinition ensureInitMethod = null;
-                for (int i = 0; i < entryType.Methods.Count; i++)
-                {
-                    if (entryType.Methods[i].Name == "EnsureInitialized")
-                    {
-                        ensureInitMethod = entryType.Methods[i];
-                        break;
-                    }
-                }
-                if (ensureInitMethod == null)
-                {
-                    throw new InvalidOperationException("EnsureInitialized() not found on ModEntryPoint.");
-                }
-
-                MethodReference importedEnsureInit = worldAsm.MainModule.ImportReference(ensureInitMethod);
-
-                TypeDefinition inputCtrlType = worldAsm.MainModule.GetType("World.Input.WorldInputController");
-                if (inputCtrlType == null)
-                {
-                    throw new InvalidOperationException("World.Input.WorldInputController not found in World.dll.");
-                }
-
-                MethodDefinition updateMethod = null;
-                for (int i = 0; i < inputCtrlType.Methods.Count; i++)
-                {
-                    if (inputCtrlType.Methods[i].Name == "Update")
-                    {
-                        updateMethod = inputCtrlType.Methods[i];
-                        break;
-                    }
-                }
-                if (updateMethod == null)
-                {
-                    throw new InvalidOperationException("WorldInputController::Update() not found in World.dll.");
-                }
-
-                // Avoid duplicate injection if World.dll.bak somehow already had the call
-                bool alreadyInjected = false;
-                for (int i = 0; i < updateMethod.Body.Instructions.Count; i++)
-                {
-                    Instruction ins = updateMethod.Body.Instructions[i];
-                    if (ins.OpCode == OpCodes.Call && ins.Operand is MethodReference)
-                    {
-                        MethodReference mr = (MethodReference)ins.Operand;
-                        if (mr.Name == "EnsureInitialized" && mr.DeclaringType.FullName == "OneWayTickets.KeyboardMod.ModEntryPoint")
-                        {
-                            alreadyInjected = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!alreadyInjected)
-                {
-                    ILProcessor il = updateMethod.Body.GetILProcessor();
-                    Instruction firstIns = updateMethod.Body.Instructions[0];
-                    Instruction callIns = il.Create(OpCodes.Call, importedEnsureInit);
-                    il.InsertBefore(firstIns, callIns);
-                }
-
-                worldAsm.Write(outputPatchedPath);
-            }
+                throw new InvalidOperationException("所选文件夹不是有效的《再再启程 One Way Tickets》游戏目录。");
+            return LoaderInstallation.Install(gameRoot);
         }
 
         internal static string PerformUninstall(string gameRoot)
         {
             if (!IsValidGameRoot(gameRoot))
-            {
                 throw new InvalidOperationException("所选文件夹不是有效的《再再启程 One Way Tickets》游戏目录。");
-            }
-
-            string managedDir = Path.Combine(gameRoot, @"One Way Tickets_Data\Managed");
-            string worldDll = Path.Combine(managedDir, "World.dll");
-            string worldBak = Path.Combine(managedDir, "World.dll.bak");
-            string targetModDll = Path.Combine(managedDir, "OneWayTickets.KeyboardMod.dll");
-
-            bool restored = false;
-            if (File.Exists(worldBak))
-            {
-                try
-                {
-                    File.Copy(worldBak, worldDll, true);
-                    File.Delete(worldBak);
-                    restored = true;
-                }
-                catch (IOException ex)
-                {
-                    throw new IOException("无法还原 World.dll，请先关闭正在运行的《再再启程》游戏后再卸载！\n详情: " + ex.Message, ex);
-                }
-            }
-
-            bool removedMod = false;
-            if (File.Exists(targetModDll))
-            {
-                try
-                {
-                    File.Delete(targetModDll);
-                    removedMod = true;
-                }
-                catch (IOException ex)
-                {
-                    throw new IOException("无法删除 OneWayTickets.KeyboardMod.dll，请先关闭游戏后再试！\n详情: " + ex.Message, ex);
-                }
-            }
-
-            if (!restored && !removedMod)
-            {
-                return "当前游戏目录未检测到已安装的键盘 Mod，无需卸载。";
-            }
-
-            return "卸载完成！已 100% 还原原版游戏文件（World.dll）。";
+            return LoaderInstallation.Uninstall(gameRoot);
         }
     }
-
     internal sealed class InstallerForm : Form
     {
         private readonly TextBox _pathTextBox;
@@ -541,7 +310,7 @@ namespace OneWayTickets.KeyboardMod.Installer
 
         public InstallerForm()
         {
-            Text = "《再再启程》键盘减负 Mod 一键安装器 v1.0";
+            Text = "《再再启程》键盘减负 Mod 一键安装器 v1.1";
             Size = new Size(620, 380);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
@@ -613,7 +382,7 @@ namespace OneWayTickets.KeyboardMod.Installer
             Controls.Add(_installButton);
 
             _uninstallButton = new Button();
-            _uninstallButton.Text = "一键卸载还原原版";
+            _uninstallButton.Text = "一键卸载 Mod";
             _uninstallButton.Font = new Font("Microsoft YaHei UI", 10f, FontStyle.Regular);
             _uninstallButton.Location = new Point(304, 158);
             _uninstallButton.Size = new Size(155, 48);
@@ -674,18 +443,42 @@ namespace OneWayTickets.KeyboardMod.Installer
             }
 
             _installButton.Enabled = true;
-            bool installed = Program.IsModInstalled(path);
-            _uninstallButton.Enabled = installed;
+            bool installed;
+            bool remainingFiles;
+            try
+            {
+                installed = Program.IsModInstalled(path);
+                remainingFiles = Program.HasModFiles(path);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _statusBadgeLabel.Text = "[目录布局需要手动处理]";
+                _statusBadgeLabel.ForeColor = Color.FromArgb(195, 65, 65);
+                _installButton.Enabled = false;
+                _uninstallButton.Enabled = false;
+                _openConfigButton.Enabled = false;
+                _logLabel.Text = ex.Message;
+                return;
+            }
+            _uninstallButton.Enabled = installed || remainingFiles;
             _openConfigButton.Enabled = File.Exists(Path.Combine(path, "OneWayTickets.KeyboardMod.ini"));
 
             if (installed)
             {
-                _statusBadgeLabel.Text = "[已安装 Mod · 可随时更新或卸载]";
+                _statusBadgeLabel.Text = "[已安装 Mod · 独立加载]";
                 _statusBadgeLabel.ForeColor = Color.FromArgb(37, 130, 82);
-                _logLabel.Text = "状态：当前已安装《再再启程》键盘减负 Mod。\n"
+                _logLabel.Text = "状态：键盘 Mod 通过 BepInEx 独立加载，原版游戏文件保持原样。\n"
                     + "• 左手 ASDFG 控武器（CapsLock 全自动开火），QWERT 定点修，Z 刹车 / X 灵能冲刺 / C 风箱\n"
                     + "• 右手 HJKL; 拎工具箱（空格全车智能抢修），' 或 ] 一键最优派驻船员\n"
                     + "• 游戏中按 F9 显隐快捷键提示，按 F10 热重载改键配置。";
+            }
+            else if (remainingFiles)
+            {
+                _statusBadgeLabel.Text = "[Mod 未生效 · 检测到残留文件]";
+                _statusBadgeLabel.ForeColor = Color.FromArgb(180, 115, 20);
+                _logLabel.Text = "状态：独立加载器不完整或已禁用。\n"
+                    + "• 点击【一键安装 / 更新 Mod】可检查并补全本安装器添加的文件。\n"
+                    + "• 点击【一键卸载 Mod】可清理本 Mod 文件并保留共享加载器。";
             }
             else
             {

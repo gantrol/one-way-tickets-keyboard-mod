@@ -9,7 +9,6 @@ using World;
 using World.Adherents;
 using World.Caravans;
 using World.Characters;
-using World.Characters.CharacterStates;
 using World.Devices;
 using World.Devices.DeviceEmergencies;
 using World.Devices.DeviceEmergencies.DeviceEmergenciesView;
@@ -52,6 +51,11 @@ namespace OneWayTickets.KeyboardMod
         private int _wakeUpTapCooldownTicks;
         private int _sfxCooldownTicks;
 
+        private readonly CharacterWakeUpSession _wakeUpSession = new CharacterWakeUpSession();
+        private int _wakeUpTargetMask = -1;
+        private int _lastWakeUpRemainingCount;
+        private bool _wakeUpSoundPending;
+
         private readonly Dictionary<Device, float> _fallbackFixProgress = new Dictionary<Device, float>();
         private PlayerToolMgrView _cachedToolMgrView;
         private float _lastToolViewSearchTime;
@@ -79,6 +83,7 @@ namespace OneWayTickets.KeyboardMod
         }
 
         public bool IsGlobalSmartMaintaining => _holdingGlobalSmart;
+        public int PendingWakeUpCount => _wakeUpSession.RemainingCount;
 
         public void UpdateInput(Keyboard kb)
         {
@@ -125,17 +130,35 @@ namespace OneWayTickets.KeyboardMod
             _holdingWakeUp = !ctrlHeld && !altHeld && cfg.ToolWakeUpKey != Key.None && kb[cfg.ToolWakeUpKey].isPressed;
             _holdingGlobalSmart = !ctrlHeld && !altHeld && cfg.GlobalSmartMaintainKey != Key.None && kb[cfg.GlobalSmartMaintainKey].isPressed;
 
+            // Start the general request first so a simultaneous character key can
+            // narrow it to the explicitly selected person below.
+            if (bDown)
+            {
+                _wakeUpTargetMask = -1;
+                _wakeUpTapCooldownTicks = 0;
+                OnWakeUpKeyPressed();
+            }
+            if (!_holdingWakeUp)
+            {
+                _wakeUpTargetMask = -1;
+            }
+
             // WakeUp key (;) + Character key (Y..[ or 1..6): Targeted character wake-up on press
             if (_holdingWakeUp)
             {
+                int targetMask = 0;
                 for (int i = 0; i < 6; i++)
                 {
                     Key ck = i < cfg.CharacterKeys.Length ? cfg.CharacterKeys[i] : Key.None;
                     Key ak = i < cfg.CharacterAltKeys.Length ? cfg.CharacterAltKeys[i] : Key.None;
                     if ((ck != Key.None && kb[ck].wasPressedThisFrame) || (ak != Key.None && kb[ak].wasPressedThisFrame))
                     {
-                        TryWakeUpCharacterByIndex(i, true);
+                        targetMask |= 1 << i;
                     }
+                }
+                if (targetMask != 0)
+                {
+                    TryStartWakeUpSelected(targetMask);
                 }
             }
 
@@ -163,11 +186,6 @@ namespace OneWayTickets.KeyboardMod
             {
                 _ragCooldownTicks = 0;
                 OnRagKeyPressed(slots);
-            }
-            if (bDown)
-            {
-                _wakeUpTapCooldownTicks = 0;
-                OnWakeUpKeyPressed();
             }
             if (spaceDown)
             {
@@ -225,15 +243,11 @@ namespace OneWayTickets.KeyboardMod
             {
                 MaintainWetAndAcidTick(slots, false, out _);
             }
-            if (_holdingWakeUp)
-            {
-                TryWakeUpAllComaCharacters(false, out _);
-            }
+            ContinueWakeUpTick();
 
             // 3. Global Smart Maintenance (Space)
             if (_holdingGlobalSmart)
             {
-                TryWakeUpAllComaCharacters(false, out _);
                 MaintainFiresTick(slots, out _);
                 MaintainVinesTick(slots, false, out _);
                 MaintainWetAndAcidTick(slots, false, out _);
@@ -424,15 +438,15 @@ namespace OneWayTickets.KeyboardMod
             string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.ToolWakeUpKey);
             string wakeStage = GetWakeStageDescription();
 
-            if (TryWakeUpAllComaCharacters(true, out int wokeCharIndex))
+            if (TryStartWakeUpAll(out int firstTargetIndex))
             {
                 if (IsGlobalAedStage())
                 {
-                    SetStatus($"[{keyLabel}:{wakeStage}] 除颤仪全车电击：正在唤醒所有昏迷角色！");
+                    SetStatus($"[{keyLabel}:{wakeStage}] 全车持续电击：仍有 {_wakeUpSession.RemainingCount} 名角色昏迷，醒来后自动停止");
                 }
                 else
                 {
-                    SetStatus($"[{keyLabel}:{wakeStage}] 正在唤醒 {wokeCharIndex + 1} 号昏迷角色！");
+                    SetStatus($"[{keyLabel}:{wakeStage}] 从 {firstTargetIndex + 1} 号开始依次唤醒，仍有 {_wakeUpSession.RemainingCount} 名角色昏迷");
                 }
             }
             else
@@ -446,9 +460,9 @@ namespace OneWayTickets.KeyboardMod
         {
             List<string> actions = new List<string>(4);
 
-            if (TryWakeUpAllComaCharacters(true, out int wokeIdx))
+            if (TryStartWakeUpAll(out _))
             {
-                actions.Add($"唤醒{wokeIdx + 1}号角色({GetWakeStageDescription()})");
+                actions.Add($"持续唤醒{_wakeUpSession.RemainingCount}名昏迷角色({GetWakeStageDescription()})");
             }
             if (MaintainFiresTick(slots, out int fireSlot))
             {
@@ -1015,7 +1029,7 @@ namespace OneWayTickets.KeyboardMod
             return level >= 2 || logic is ChainSaw || logic is CircleSaw || logic is Saw;
         }
 
-        private void TryWakeUpCharacterByIndex(int charIndex, bool isKeyDown)
+        private void TryStartWakeUpSelected(int targetMask)
         {
             Mission mission = Singleton<Mission>.instance;
             if (mission == null || !mission.try_get_mgr("CharacterMgr", out CharacterMgr charMgr) || charMgr?.characters == null)
@@ -1023,107 +1037,121 @@ namespace OneWayTickets.KeyboardMod
                 return;
             }
 
-            if (charIndex < 0 || charIndex >= charMgr.characters.Count)
-            {
-                return;
-            }
-
-            Character c = charMgr.characters[charIndex];
             string wakeKeyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.ToolWakeUpKey);
             string wakeStage = GetWakeStageDescription();
-            if (c != null && c.state is Coma)
+            _wakeUpTargetMask = targetMask;
+            _wakeUpSession.Begin(charMgr.characters, mission, targetMask);
+            _lastWakeUpRemainingCount = _wakeUpSession.RemainingCount;
+            _wakeUpSoundPending = _wakeUpSession.RemainingCount > 0;
+            if (_wakeUpSession.RemainingCount > 0)
             {
-                ApplyWakeUpTrigger(c, isKeyDown);
-                _animController.TriggerToolUse(ToolAnimCategory.WakeUp, -1, false, 0.24f);
-                SetStatus($"[{wakeKeyLabel}+{charIndex + 1}:{wakeStage}] 正在唤醒 {charIndex + 1} 号昏迷角色...");
+                _wakeUpTapCooldownTicks = 0;
+                SetStatus($"[{wakeKeyLabel}:定点{wakeStage}] 持续唤醒 {_wakeUpSession.RemainingCount} 名指定角色，确认清醒后自动停止");
             }
-            else if (isKeyDown)
+            else
             {
                 _animController.TriggerToolUse(ToolAnimCategory.WakeUp, -1, false, 0.16f);
-                SetStatus($"[{wakeKeyLabel}+{charIndex + 1}:{wakeStage}] {charIndex + 1} 号角色当前清醒，无需唤醒");
+                SetStatus($"[{wakeKeyLabel}:定点{wakeStage}] 指定角色当前没有处于昏迷状态，无需唤醒");
             }
         }
 
-        private bool TryWakeUpAllComaCharacters(bool isKeyDown, out int firstWokeIndex)
+        private bool TryStartWakeUpAll(out int firstTargetIndex)
         {
-            firstWokeIndex = -1;
+            firstTargetIndex = -1;
             Mission mission = Singleton<Mission>.instance;
             if (mission == null || !mission.try_get_mgr("CharacterMgr", out CharacterMgr charMgr) || charMgr?.characters == null)
             {
+                _wakeUpSession.Clear();
                 return false;
             }
 
-            int comaToolId = GetComaToolId();
-            int wakeToolLevel = GetToolLevel(comaToolId);
-            ToolLogic wakeLogic = GetActiveToolLogic(comaToolId);
-
-            bool isClickWakeTool = (wakeLogic is InflatingHammer || wakeLogic is ScreamingChicken) || (wakeLogic == null && wakeToolLevel <= 0);
-            bool isGlobalAed = (wakeLogic is AED) || wakeToolLevel >= 3;
-
-            // For click tools (InflatingHammer / ScreamingChicken), trigger immediately on keydown or every 18 ticks while held
-            if (isClickWakeTool && !isKeyDown && _wakeUpTapCooldownTicks > 0)
-            {
-                return false;
-            }
-
-            bool wokeAny = false;
-            for (int i = 0; i < charMgr.characters.Count; i++)
-            {
-                Character c = charMgr.characters[i];
-                if (c != null && c.state is Coma)
-                {
-                    if (firstWokeIndex < 0)
-                    {
-                        firstWokeIndex = i;
-                    }
-                    ApplyWakeUpTrigger(c, isKeyDown || isClickWakeTool);
-                    wokeAny = true;
-
-                    // Only AED (stage 3) wakes ALL comatose characters simultaneously; earlier stages wake one character at a time
-                    if (!isGlobalAed)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            if (wokeAny)
-            {
-                _animController.TriggerToolUse(ToolAnimCategory.WakeUp, -1, isGlobalAed, 0.24f);
-            }
-
-            if (wokeAny && isClickWakeTool)
-            {
-                _wakeUpTapCooldownTicks = 18;
-            }
-            return wokeAny;
+            _wakeUpSession.Begin(charMgr.characters, mission);
+            _lastWakeUpRemainingCount = _wakeUpSession.RemainingCount;
+            _wakeUpSoundPending = _wakeUpSession.RemainingCount > 0;
+            firstTargetIndex = _wakeUpSession.FirstPendingIndex(charMgr.characters);
+            return _wakeUpSession.RemainingCount > 0;
         }
 
-        private void ApplyWakeUpTrigger(Character c, bool useTapEffect)
+        private void ContinueWakeUpTick()
         {
-            if (c?.state == null)
+            Mission mission = Singleton<Mission>.instance;
+            if (mission == null || !mission.try_get_mgr("CharacterMgr", out CharacterMgr charMgr) || charMgr?.characters == null)
+            {
+                _wakeUpSession.Clear();
+                return;
+            }
+
+            if (_wakeUpSession.Refresh(charMgr.characters, mission))
+            {
+                SetStatus("[唤醒] 已确认本次所有目标角色清醒");
+            }
+
+            // A tap finishes its original group even after key release. Holding a key
+            // additionally picks up newly comatose characters after that group is done.
+            if (_wakeUpSession.RemainingCount == 0 && (_holdingWakeUp || _holdingGlobalSmart))
+            {
+                int targetMask = _holdingGlobalSmart ? -1 : _wakeUpTargetMask;
+                _wakeUpSession.Begin(charMgr.characters, mission, targetMask);
+                _wakeUpSoundPending = _wakeUpSession.RemainingCount > 0;
+            }
+
+            int remaining = _wakeUpSession.RemainingCount;
+            if (remaining > 0 && remaining != _lastWakeUpRemainingCount)
+            {
+                SetStatus($"[唤醒] 仍有 {remaining} 名角色昏迷，持续唤醒中...");
+            }
+            _lastWakeUpRemainingCount = remaining;
+
+            if (remaining == 0)
+            {
+                return;
+            }
+
+            string typeName = GetWakeUpToolTypeName();
+            bool isClickWakeTool = typeName == nameof(InflatingHammer) || typeName == nameof(ScreamingChicken);
+            if (isClickWakeTool && _wakeUpTapCooldownTicks > 0)
             {
                 return;
             }
 
             Config cfg = Config.current;
-            int comaToolId = GetComaToolId();
-            ToolLogic wakeLogic = GetActiveToolLogic(comaToolId);
-
-            int effect;
-            if (wakeLogic is InflatingHammer || (wakeLogic == null && useTapEffect && GetToolLevel(comaToolId) <= 0))
+            int effect = typeName == nameof(InflatingHammer)
+                ? (cfg != null ? cfg.hammer_lv_0_effect : 30)
+                : (cfg != null ? cfg.hammer_lv_1_effect : 2);
+            bool isGlobalAed = typeName == nameof(AED);
+            if (_wakeUpSession.Apply(effect, isGlobalAed))
             {
-                effect = cfg != null ? cfg.hammer_lv_0_effect : 30;
+                _animController.TriggerToolUse(ToolAnimCategory.WakeUp, -1, isGlobalAed, 0.24f);
+                if (isClickWakeTool)
+                {
+                    _wakeUpTapCooldownTicks = 18;
+                }
+                if (isClickWakeTool || _wakeUpSoundPending)
+                {
+                    PlayToolOneShot(GetComaToolId());
+                    _wakeUpSoundPending = false;
+                }
             }
-            else
+        }
+
+        private string GetWakeUpToolTypeName()
+        {
+            int toolId = GetComaToolId();
+            ToolLogic logic = GetActiveToolLogic(toolId);
+            if (logic != null)
             {
-                effect = cfg != null ? cfg.hammer_lv_1_effect : 2;
+                return logic.GetType().Name;
             }
 
-            c.state.trigger(effect);
-            if (useTapEffect)
+            // Views are not instantiated until the toolbox is opened. These stages
+            // match the game's PlayerTool_Hammer_0..4 prefabs: Tweeter is lv3, AED lv4.
+            switch (GetToolLevel(toolId))
             {
-                PlayToolOneShot(comaToolId);
+                case 1: return nameof(ScreamingChicken);
+                case 2: return nameof(Clock);
+                case 3: return nameof(Tweeter);
+                case 4: return nameof(AED);
+                default: return nameof(InflatingHammer);
             }
         }
 
@@ -1175,22 +1203,21 @@ namespace OneWayTickets.KeyboardMod
         {
             int toolId = GetComaToolId();
             string localized = GetToolDisplayName(toolId, string.Empty);
-            ToolLogic logic = GetActiveToolLogic(toolId);
-            int level = GetToolLevel(toolId);
+            string typeName = GetWakeUpToolTypeName();
 
-            if (logic is AED || level >= 3)
+            if (typeName == nameof(AED))
             {
                 return !string.IsNullOrEmpty(localized) ? $"{localized}(全车除颤)" : "除颤仪(全车)";
             }
-            if (logic is Tweeter)
+            if (typeName == nameof(Tweeter))
             {
                 return !string.IsNullOrEmpty(localized) ? localized : "扩音喇叭";
             }
-            if (logic is Clock)
+            if (typeName == nameof(Clock))
             {
                 return !string.IsNullOrEmpty(localized) ? localized : "闹钟";
             }
-            if (logic is ScreamingChicken)
+            if (typeName == nameof(ScreamingChicken))
             {
                 return !string.IsNullOrEmpty(localized) ? localized : "惨叫鸡";
             }
@@ -1206,9 +1233,7 @@ namespace OneWayTickets.KeyboardMod
 
         private bool IsGlobalAedStage()
         {
-            int toolId = GetComaToolId();
-            ToolLogic logic = GetActiveToolLogic(toolId);
-            return (logic is AED) || GetToolLevel(toolId) >= 3;
+            return GetWakeUpToolTypeName() == nameof(AED);
         }
 
         private static int GetWrenchToolId() => Config.current != null ? Config.current.highlight_fix_id : 1;

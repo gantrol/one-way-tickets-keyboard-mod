@@ -4,7 +4,7 @@ using UnityEngine;
 namespace OneWayTickets.KeyboardMod
 {
     /// <summary>
-    /// Static entry point injected into World.Input.WorldInputController.Update().
+    /// Entry point called by the BepInEx plugin on Unity's main thread.
     /// Initializes the persistent KeyboardModBehaviour GameObject once per session.
     /// </summary>
     public static class ModEntryPoint

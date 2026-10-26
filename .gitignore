@@ -17,3 +17,13 @@ obj/
 # OS
 Thumbs.db
 .DS_Store
+
+# Video production files (project stored outside this repository)
+/docs/demo/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.avi
+*.srt
+*.vtt

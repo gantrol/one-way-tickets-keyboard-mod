@@ -8,7 +8,7 @@
     <Nullable>disable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <GameManagedDir>D:\SteamLibrary\steamapps\common\再再启程 One Way Tickets\One Way Tickets_Data\Managed</GameManagedDir>
+    <GameManagedDir Condition="'$(GameManagedDir)' == ''">D:\SteamLibrary\steamapps\common\再再启程 One Way Tickets\One Way Tickets_Data\Managed</GameManagedDir>
   </PropertyGroup>
 
   <ItemGroup>

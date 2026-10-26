@@ -67,13 +67,13 @@ A non-destructive keyboard control and Quality-of-Life (QoL) mod for **One Way T
 
 > **Important**: Please **close the game** before running the installer so `World.dll` and `OneWayTickets.KeyboardMod.dll` are not locked by the running process.
 
-Run the PowerShell installer from the repository root:
+Run the PowerShell installer from the repository root (it **automatically detects your game directory across all Steam libraries** via the Windows Registry and `libraryfolders.vdf`, and passes the resolved `Managed` path to `dotnet build`):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Install-Mod.ps1
 ```
 
-If your game is installed in a custom Steam library folder, pass `-GameRoot`:
+If your game is located outside standard Steam libraries, you can also pass `-GameRoot` explicitly:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Install-Mod.ps1 -GameRoot "E:\SteamLibrary\steamapps\common\再再启程 One Way Tickets"

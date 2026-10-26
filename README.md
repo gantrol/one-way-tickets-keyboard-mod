@@ -67,13 +67,13 @@
 
 > **注意**：安装或更新前请先**关闭游戏**（否则 DLL 文件被游戏进程占用无法覆盖）。
 
-在项目根目录下使用 PowerShell 运行安装脚本：
+在项目根目录下使用 PowerShell 运行安装脚本（脚本会**自动从注册表与 `libraryfolders.vdf` 扫描所有磁盘的 Steam 库**来定位《再再启程》目录，并将定位到的 `Managed` 路径传给编译器）：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Install-Mod.ps1
 ```
 
-如果您的游戏安装在非默认路径，可以通过 `-GameRoot` 指定路径：
+如果您的游戏未通过 Steam 安装，也可以通过 `-GameRoot` 手动指定路径：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Install-Mod.ps1 -GameRoot "E:\SteamLibrary\steamapps\common\再再启程 One Way Tickets"

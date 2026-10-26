@@ -1,19 +1,108 @@
 param(
-    [string]$GameRoot = "D:\SteamLibrary\steamapps\common\$([char]0x518D)$([char]0x518D)$([char]0x542F)$([char]0x7A0B) One Way Tickets",
+    [string]$GameRoot = "",
     [switch]$SkipBuild
 )
 
 $ErrorActionPreference = "Stop"
 $ProjectDir = $PSScriptRoot
-$ManagedDir = Join-Path $GameRoot "One Way Tickets_Data\Managed"
+$GameFolderName = "$([char]0x518D)$([char]0x518D)$([char]0x542F)$([char]0x7A0B) One Way Tickets"
 
-if (-not (Test-Path $ManagedDir)) {
-    throw "Game Managed directory not found: $ManagedDir"
+function Resolve-GameRoot([string]$ExplicitPath) {
+    if (-not [string]::IsNullOrWhiteSpace($ExplicitPath)) {
+        if (Test-Path (Join-Path $ExplicitPath "One Way Tickets_Data\Managed\World.dll")) {
+            return (Resolve-Path $ExplicitPath).Path
+        }
+        throw "Specified -GameRoot does not contain 'One Way Tickets_Data\Managed\World.dll': $ExplicitPath"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:ONE_WAY_TICKETS_DIR)) {
+        if (Test-Path (Join-Path $env:ONE_WAY_TICKETS_DIR "One Way Tickets_Data\Managed\World.dll")) {
+            return (Resolve-Path $env:ONE_WAY_TICKETS_DIR).Path
+        }
+    }
+
+    $SteamLibs = New-Object System.Collections.Generic.List[string]
+
+    # 1. Read Steam install path from Windows Registry and parse libraryfolders.vdf
+    $RegPaths = @(
+        "HKCU:\Software\Valve\Steam",
+        "HKLM:\SOFTWARE\WOW6432Node\Valve\Steam",
+        "HKLM:\SOFTWARE\Valve\Steam"
+    )
+    foreach ($rp in $RegPaths) {
+        if (Test-Path $rp) {
+            $props = Get-ItemProperty -Path $rp -ErrorAction SilentlyContinue
+            foreach ($propName in @("SteamPath", "InstallPath")) {
+                $val = $props.$propName
+                if (-not [string]::IsNullOrWhiteSpace($val)) {
+                    $normalized = $val.Replace("/", "\").TrimEnd("\")
+                    if ((Test-Path $normalized) -and (-not $SteamLibs.Contains($normalized))) {
+                        $SteamLibs.Add($normalized)
+                    }
+                    $vdfPath = Join-Path $normalized "steamapps\libraryfolders.vdf"
+                    if (Test-Path $vdfPath) {
+                        $lines = Get-Content -Path $vdfPath -ErrorAction SilentlyContinue
+                        foreach ($line in $lines) {
+                            if ($line -match '"path"\s+"([^"]+)"') {
+                                $libPath = $Matches[1].Replace("\\", "\").TrimEnd("\")
+                                if ((Test-Path $libPath) -and (-not $SteamLibs.Contains($libPath))) {
+                                    $SteamLibs.Add($libPath)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    # 2. Add common Steam library locations across all local filesystem drives
+    $Drives = Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue
+    foreach ($d in $Drives) {
+        $root = $d.Root
+        foreach ($sub in @(
+            "SteamLibrary",
+            "Steam",
+            "Program Files (x86)\Steam",
+            "Program Files\Steam",
+            "Games\SteamLibrary",
+            "Games\Steam"
+        )) {
+            $cand = Join-Path $root $sub
+            if ((Test-Path $cand) -and (-not $SteamLibs.Contains($cand))) {
+                $SteamLibs.Add($cand)
+            }
+        }
+    }
+
+    # 3. Check each library for the game directory
+    foreach ($lib in $SteamLibs) {
+        $commonDir = Join-Path $lib "steamapps\common"
+        if (-not (Test-Path $commonDir)) { continue }
+
+        $directCandidate = Join-Path $commonDir $GameFolderName
+        if (Test-Path (Join-Path $directCandidate "One Way Tickets_Data\Managed\World.dll")) {
+            return (Resolve-Path $directCandidate).Path
+        }
+
+        $wildCandidates = Get-ChildItem -Path $commonDir -Directory -Filter "*One Way Tickets*" -ErrorAction SilentlyContinue
+        foreach ($wc in $wildCandidates) {
+            if (Test-Path (Join-Path $wc.FullName "One Way Tickets_Data\Managed\World.dll")) {
+                return $wc.FullName
+            }
+        }
+    }
+
+    throw "Could not auto-detect 'One Way Tickets' installation across Steam libraries. Please pass -GameRoot '<path to game>'."
 }
+
+$ResolvedGameRoot = Resolve-GameRoot $GameRoot
+$ManagedDir = Join-Path $ResolvedGameRoot "One Way Tickets_Data\Managed"
+Write-Host "[0/4] Detected Game Root: $ResolvedGameRoot" -ForegroundColor Green
 
 if (-not $SkipBuild) {
     Write-Host "[1/4] Building OneWayTickets.KeyboardMod.csproj ..." -ForegroundColor Cyan
-    dotnet build (Join-Path $ProjectDir "OneWayTickets.KeyboardMod.csproj") -c Release | Out-Host
+    dotnet build (Join-Path $ProjectDir "OneWayTickets.KeyboardMod.csproj") -c Release "-p:GameManagedDir=$ManagedDir" | Out-Host
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet build failed with exit code $LASTEXITCODE"
     }
@@ -49,7 +138,7 @@ if (-not $CecilPath) {
     if ($FoundCecil) { $CecilPath = $FoundCecil.FullName }
 }
 if (-not $CecilPath) {
-    throw "Mono.Cecil.dll not found."
+    throw "Mono.Cecil.dll not found in local NuGet cache."
 }
 
 Add-Type -Path $CecilPath
@@ -82,7 +171,7 @@ $modAsm.Dispose()
 Move-Item -Path $TempPatched -Destination $WorldDll -Force
 
 $DefaultIniSrc = Join-Path $ProjectDir "OneWayTickets.KeyboardMod.ini"
-$TargetIni = Join-Path $GameRoot "OneWayTickets.KeyboardMod.ini"
+$TargetIni = Join-Path $ResolvedGameRoot "OneWayTickets.KeyboardMod.ini"
 if ((Test-Path $DefaultIniSrc) -and (-not (Test-Path $TargetIni))) {
     Copy-Item -Path $DefaultIniSrc -Destination $TargetIni -Force
 }

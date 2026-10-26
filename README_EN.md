@@ -11,7 +11,7 @@ A non-destructive keyboard control and Quality-of-Life (QoL) mod for **One Way T
 1. **Instant Toolbox Actions Without Opening or Dragging (Core QoL)**
    - **Hold `Space` for Global Smart Maintenance**: Automatically prioritizes waking stunned characters, extinguishing fires, neutralizing acid, wiping water, cutting vines, kicking sleeping devices, and repairing the lowest-HP device with the wrench.
    - **Hold `A / S / D / F / G / H` for Per-Slot Maintenance**: Directly clears emergencies and repairs the device in Slot 1–6 (vertically aligned with `Q / W / E / R / T / Y` above).
-   - **Tap or Hold `Z / X / C / V / B` for Dedicated Tools**: Wrench repair (`Z`), Scissors for vines (`X`), Rag for water/acid (`C`), Extinguisher for fire (`V`), and Bell wake-up (`B`, or `B + 1~6` to wake a specific character).
+   - **Tap or Hold `Z / X / C / V / B` for Dedicated Tools**: Wrench & Caravan Repair Kit (`Z`), Extinguisher for fire (`X`), Saw/Scissors for vines (`C`), Rag/Mop for water/acid (`V`), and Wake-up tool (`B`, or `B + 1~6` to wake a specific character).
 
 2. **Full Keyboard Weapon Control (1–3 Actions + Manual Override During `[AUTO]`)**
    - **Primary Action & Smart Loop (Tap/Hold `Q / W / E / R / T / Y`)**:
@@ -40,7 +40,7 @@ A non-destructive keyboard control and Quality-of-Life (QoL) mod for **One Way T
 | **Row 1 (Numbers)** | `1` `2` `3` `4` `5` `6` | **Characters (1–6)** | **Tap `1~6` then `Q~Y`**: Dispatch character to device slot (repeat to cycle cubicles)<br>**Double-tap `1~6` or `0` / `Backspace`**: Recall character to rest<br>**`Alt + 1~6`**: Swap front-line character with backup |
 | **Row 2 (QWERTY)** | `Q` `W` `E` `R` `T` `Y`<br>+ `Tab` | **Weapon Bar (Slots 1–6, L to R)** | **Tap/Hold `Q~Y`**: Primary action + Smart Loop (attack/fire/auto-reload/charge)<br>**`Ctrl + Q~Y` / Click Badge**: Toggle slot **`[AUTO]` mode**<br>**`Tab` / Click Top Banner**: Toggle all weapon slots `[AUTO]`<br>**`Shift + Q~Y`**: Weapon Action 2<br>**`Alt + Q~Y`**: Weapon Action 3 |
 | **Row 3 (ASDFGH)** | `A` `S` `D` `F` `G` `H` | **Slot Maintenance (Slots 1–6)** | **Hold `A~H`**: Perform **Emergency Clear + Wrench Repair** on the corresponding device slot (`Q~Y`) directly above |
-| **Row 4 (ZXCVB)** | `Z` `X` `C` `V` `B`<br>+ `Space` | **Toolbox & Global Maintenance** | **Hold `Space`**: **Global Smart Maintenance** (auto-prioritizes all emergencies & repairs)<br>**`Z`**: Wrench \| **`X`**: Scissors (Vines) \| **`C`**: Rag (Water/Acid)<br>**`V`**: Extinguisher (Fire) \| **`B`**: Bell Wake-up (`B + 1~6` for specific character) |
+| **Row 4 (ZXCVB)** | `Z` `X` `C` `V` `B`<br>+ `Space` | **Toolbox & Global Maintenance** | **Tap/Hold `Space`**: **Global Smart Maintenance** (auto-prioritizes all emergencies & repairs)<br>**`Z`**: Wrench / Repair Kit \| **`X`**: Extinguisher (Fire) \| **`C`**: Saw/Scissors (Vines)<br>**`V`**: Rag (Water/Acid) \| **`B`**: Wake-up (`B + 1~6` for specific character) |
 
 ---
 

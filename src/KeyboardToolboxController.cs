@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using World;
 using World.Adherents;
+using World.Caravans;
 using World.Characters;
 using World.Characters.CharacterStates;
 using World.Devices;
@@ -14,16 +15,17 @@ using World.Devices.DeviceEmergencies.DeviceEmergenciesView;
 using World.Devices.DeviceUiViews;
 using World.Player_Tool;
 using World.Player_Tool.ToolsLogic;
+using World.Widgets;
 
 namespace OneWayTickets.KeyboardMod
 {
     /// <summary>
     /// Handles Row 3 (A S D F G H) and Row 4 (Z X C V B + Space) Toolbox controls:
     /// - Row 3 (A..H): Direct per-slot maintenance aligned under Q..Y
-    ///   (Repairs broken device, extinguishes fire, cuts top-most vine without HP penalty, wipes water/acid, un-jams stupor)
+    ///   (Repairs broken device, extinguishes fire, cuts top-most vine without HP penalty, wipes water/acid, un-jams stupor, or heals damaged HP via repair kit)
     /// - Row 4 (Z X C V B): Specific tool category maintenance across the caravan
-    ///   (Z=Wrench, X=Extinguisher, C=Saw, V=Rag, B=WakeUp comatose characters, B+1..6=Targeted WakeUp)
-    /// - Space: Global Smart Maintenance (automatically handles all active emergencies and comatose characters)
+    ///   (Z=Wrench/Repair, X=Extinguisher, C=Saw/Scissors, V=Rag/Mop, B=WakeUp comatose characters, B+1..6=Targeted WakeUp)
+    /// - Space: Global Smart Maintenance (automatically handles all active emergencies, comatose characters, and broken/damaged devices)
     /// </summary>
     public sealed class KeyboardToolboxController
     {
@@ -95,6 +97,13 @@ namespace OneWayTickets.KeyboardMod
             }
 
             // Row 4: Specific tool keys (Z X C V B) + Global Smart Maintain (Space)
+            bool zDown = !ctrlHeld && !altHeld && cfg.ToolWrenchKey != Key.None && kb[cfg.ToolWrenchKey].wasPressedThisFrame;
+            bool xDown = !ctrlHeld && !altHeld && cfg.ToolExtinguisherKey != Key.None && kb[cfg.ToolExtinguisherKey].wasPressedThisFrame;
+            bool cDown = !ctrlHeld && !altHeld && cfg.ToolSawKey != Key.None && kb[cfg.ToolSawKey].wasPressedThisFrame;
+            bool vDown = !ctrlHeld && !altHeld && cfg.ToolRagKey != Key.None && kb[cfg.ToolRagKey].wasPressedThisFrame;
+            bool bDown = !ctrlHeld && !altHeld && cfg.ToolWakeUpKey != Key.None && kb[cfg.ToolWakeUpKey].wasPressedThisFrame;
+            bool spaceDown = !ctrlHeld && !altHeld && cfg.GlobalSmartMaintainKey != Key.None && kb[cfg.GlobalSmartMaintainKey].wasPressedThisFrame;
+
             _holdingWrench = !ctrlHeld && !altHeld && cfg.ToolWrenchKey != Key.None && kb[cfg.ToolWrenchKey].isPressed;
             _holdingExtinguisher = !ctrlHeld && !altHeld && cfg.ToolExtinguisherKey != Key.None && kb[cfg.ToolExtinguisherKey].isPressed;
             _holdingSaw = !ctrlHeld && !altHeld && cfg.ToolSawKey != Key.None && kb[cfg.ToolSawKey].isPressed;
@@ -115,9 +124,44 @@ namespace OneWayTickets.KeyboardMod
                 }
             }
 
-            if (!ctrlHeld && !altHeld && cfg.ToolWakeUpKey != Key.None && kb[cfg.ToolWakeUpKey].wasPressedThisFrame)
+            // Immediate execution on key-down so single taps (not just holds) always work and show clear feedback
+            IReadOnlyList<ResolvedDeviceSlot> slots = null;
+            if (zDown || xDown || cDown || vDown || bDown || spaceDown)
             {
-                TryWakeUpAllComaCharacters(true);
+                slots = _slotResolver.GetOrderedSlots();
+            }
+
+            if (zDown)
+            {
+                _stuporCooldownTicks = 0;
+                OnWrenchKeyPressed(slots);
+            }
+            if (xDown)
+            {
+                OnExtinguisherKeyPressed(slots);
+            }
+            if (cDown)
+            {
+                _sawCooldownTicks = 0;
+                OnSawKeyPressed(slots);
+            }
+            if (vDown)
+            {
+                _ragCooldownTicks = 0;
+                OnRagKeyPressed(slots);
+            }
+            if (bDown)
+            {
+                _wakeUpTapCooldownTicks = 0;
+                OnWakeUpKeyPressed();
+            }
+            if (spaceDown)
+            {
+                _sawCooldownTicks = 0;
+                _ragCooldownTicks = 0;
+                _stuporCooldownTicks = 0;
+                _wakeUpTapCooldownTicks = 0;
+                OnGlobalSmartKeyPressed(slots);
             }
         }
 
@@ -146,7 +190,13 @@ namespace OneWayTickets.KeyboardMod
             // 2. Specific tool maintenance (Z X C V B)
             if (_holdingWrench)
             {
-                MaintainBrokenDevicesTick(slots);
+                if (!MaintainBrokenDevicesTick(slots))
+                {
+                    if (!MaintainStuporDevicesTick(slots))
+                    {
+                        TryUseCaravanRepairKitOnDamaged(slots, out _);
+                    }
+                }
             }
             if (_holdingExtinguisher)
             {
@@ -172,7 +222,10 @@ namespace OneWayTickets.KeyboardMod
                 MaintainFiresTick(slots);
                 MaintainVinesTick(slots);
                 MaintainWetAndAcidTick(slots);
-                MaintainBrokenDevicesTick(slots);
+                if (!MaintainBrokenDevicesTick(slots))
+                {
+                    TryUseCaravanRepairKitOnDamaged(slots, out _);
+                }
                 MaintainStuporDevicesTick(slots);
             }
         }
@@ -181,29 +234,35 @@ namespace OneWayTickets.KeyboardMod
         {
             if (!_slotResolver.TryGetSlot(slotIndex, out ResolvedDeviceSlot slot) || slot.Device == null)
             {
+                SetStatus($"[{ModConfig.FormatKeyLabel(ModConfig.Instance.SlotMaintainKeys[slotIndex])}] {slotIndex + 1} 号槽位无设备");
                 return;
             }
 
             Device device = slot.Device;
             string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.SlotMaintainKeys[slotIndex]);
 
+            // Immediately execute 1 maintenance step on press
+            _sawCooldownTicks = 0;
+            _ragCooldownTicks = 0;
+            _stuporCooldownTicks = 0;
+            MaintainSingleSlotTick(slot);
+
             if (!device.is_validate)
             {
-                SetStatus($"[{keyLabel}] 正在修缮 {slotIndex + 1} 号位破损设备...");
+                SetStatus($"[{keyLabel}] 正在用扳手修缮 {slotIndex + 1} 号位破损设备 (请按住 {keyLabel})...");
                 return;
             }
 
             DeviceEmergency em = device.device_emergency;
             if (em != null && !em.removed)
             {
-                if (em is DeviceStupor stupor)
+                if (em is DeviceStupor)
                 {
-                    stupor.Fix();
-                    SetStatus($"[{keyLabel}] 已拍醒 {slotIndex + 1} 号位停滞设备");
+                    SetStatus($"[{keyLabel}] 已拍醒 {slotIndex + 1} 号位停滞设备！");
                 }
                 else if (em is DeviceFired)
                 {
-                    SetStatus($"[{keyLabel}] 正在扑灭 {slotIndex + 1} 号位火焰...");
+                    SetStatus($"[{keyLabel}] 正在扑灭 {slotIndex + 1} 号位火焰 (请按住 {keyLabel})...");
                 }
                 else if (em is DeviceBind)
                 {
@@ -211,8 +270,119 @@ namespace OneWayTickets.KeyboardMod
                 }
                 else if (em is DeviceWet || em is DeviceAcid)
                 {
-                    SetStatus($"[{keyLabel}] 正在清理 {slotIndex + 1} 号位水滴/酸液...");
+                    SetStatus($"[{keyLabel}] 正在擦除 {slotIndex + 1} 号位水滴/酸液...");
                 }
+                return;
+            }
+
+            // If device is not broken and has no emergency, check if it has lost HP and can use the caravan repair kit
+            if (device.current_hp < device.max_hp)
+            {
+                if (TryUseCaravanRepairKitOnSlot(slot))
+                {
+                    SetStatus($"[{keyLabel}] 已使用维修包恢复 {slotIndex + 1} 号位设备耐久 ({device.current_hp}/{device.max_hp})！");
+                }
+                else
+                {
+                    SetStatus($"[{keyLabel}] {slotIndex + 1} 号位设备未彻底破损（扳手仅修 0 血损毁设备，维修包当前冷却中）");
+                }
+                return;
+            }
+
+            SetStatus($"[{keyLabel}] {slotIndex + 1} 号位设备状态完好 ({device.current_hp}/{device.max_hp})，无需抢修");
+        }
+
+        private void OnWrenchKeyPressed(IReadOnlyList<ResolvedDeviceSlot> slots)
+        {
+            string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.ToolWrenchKey);
+            if (MaintainBrokenDevicesTick(slots))
+            {
+                SetStatus($"[{keyLabel}:扳手] 正在修缮损毁设备 (请按住 {keyLabel})...");
+                return;
+            }
+            if (MaintainStuporDevicesTick(slots))
+            {
+                SetStatus($"[{keyLabel}:扳手] 已拍醒停滞设备！");
+                return;
+            }
+            if (TryUseCaravanRepairKitOnDamaged(slots, out string repairMsg))
+            {
+                SetStatus($"[{keyLabel}:维修] {repairMsg}");
+                return;
+            }
+            SetStatus($"[{keyLabel}:扳手] 当前无损毁设备需要扳手修缮");
+        }
+
+        private void OnExtinguisherKeyPressed(IReadOnlyList<ResolvedDeviceSlot> slots)
+        {
+            string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.ToolExtinguisherKey);
+            if (MaintainFiresTick(slots))
+            {
+                SetStatus($"[{keyLabel}:灭火器] 正在扑灭全车设备火焰 (请按住 {keyLabel})...");
+            }
+            else
+            {
+                SetStatus($"[{keyLabel}:灭火器] 当前没有着火的设备");
+            }
+        }
+
+        private void OnSawKeyPressed(IReadOnlyList<ResolvedDeviceSlot> slots)
+        {
+            string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.ToolSawKey);
+            if (MaintainVinesTick(slots))
+            {
+                SetStatus($"[{keyLabel}:锯子/剪刀] 已安全剪除表层藤蔓！");
+            }
+            else
+            {
+                SetStatus($"[{keyLabel}:锯子/剪刀] 当前没有被藤蔓缠绕的设备");
+            }
+        }
+
+        private void OnRagKeyPressed(IReadOnlyList<ResolvedDeviceSlot> slots)
+        {
+            string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.ToolRagKey);
+            if (MaintainWetAndAcidTick(slots))
+            {
+                SetStatus($"[{keyLabel}:抹布] 已清理设备上的水滴/酸液！");
+            }
+            else
+            {
+                SetStatus($"[{keyLabel}:抹布] 当前没有进水或被酸液腐蚀的设备");
+            }
+        }
+
+        private void OnWakeUpKeyPressed()
+        {
+            string keyLabel = ModConfig.FormatKeyLabel(ModConfig.Instance.ToolWakeUpKey);
+            if (TryWakeUpAllComaCharacters(true))
+            {
+                SetStatus($"[{keyLabel}:唤醒] 正在唤醒昏迷角色！");
+            }
+            else
+            {
+                SetStatus($"[{keyLabel}:唤醒] 当前没有处于昏迷状态的角色");
+            }
+        }
+
+        private void OnGlobalSmartKeyPressed(IReadOnlyList<ResolvedDeviceSlot> slots)
+        {
+            bool anyAction = false;
+            if (TryWakeUpAllComaCharacters(true)) anyAction = true;
+            if (MaintainFiresTick(slots)) anyAction = true;
+            if (MaintainVinesTick(slots)) anyAction = true;
+            if (MaintainWetAndAcidTick(slots)) anyAction = true;
+            if (MaintainBrokenDevicesTick(slots)) anyAction = true;
+            if (MaintainStuporDevicesTick(slots)) anyAction = true;
+            if (!anyAction && TryUseCaravanRepairKitOnDamaged(slots, out _)) anyAction = true;
+
+            if (anyAction)
+            {
+                SetStatus("[Space:全局抢修] 正在自动处理全车异常与修缮...");
+            }
+            else
+            {
+                SetStatus("[Space:全局抢修] 全车设备与角色状态良好，暂无异常");
             }
         }
 
@@ -232,47 +402,56 @@ namespace OneWayTickets.KeyboardMod
             }
 
             DeviceEmergency em = device.device_emergency;
-            if (em == null || em.removed)
+            if (em != null && !em.removed)
             {
-                return;
+                if (em is DeviceFired fired)
+                {
+                    ExtinguishDeviceTick(fired);
+                    return;
+                }
+                if (em is DeviceBind bind)
+                {
+                    if (_sawCooldownTicks <= 0)
+                    {
+                        CutTopVineOnDevice(slot, bind);
+                    }
+                    return;
+                }
+                if (em is DeviceWet wet)
+                {
+                    if (_ragCooldownTicks <= 0)
+                    {
+                        WipeWaterOnDevice(wet);
+                    }
+                    return;
+                }
+                if (em is DeviceAcid acid)
+                {
+                    if (_ragCooldownTicks <= 0)
+                    {
+                        WipeAcidOnDevice(acid);
+                    }
+                    return;
+                }
+                if (em is DeviceStupor stupor)
+                {
+                    if (_stuporCooldownTicks <= 0)
+                    {
+                        stupor.Fix();
+                        _stuporCooldownTicks = 15;
+                    }
+                    return;
+                }
             }
 
-            if (em is DeviceFired fired)
+            // Priority 3: If device has lost HP and caravan repair kit is available, use it
+            if (device.current_hp < device.max_hp)
             {
-                ExtinguishDeviceTick(fired);
-            }
-            else if (em is DeviceBind bind)
-            {
-                if (_sawCooldownTicks <= 0)
-                {
-                    CutTopVineOnDevice(slot, bind);
-                }
-            }
-            else if (em is DeviceWet wet)
-            {
-                if (_ragCooldownTicks <= 0)
-                {
-                    WipeWaterOnDevice(wet);
-                }
-            }
-            else if (em is DeviceAcid acid)
-            {
-                if (_ragCooldownTicks <= 0)
-                {
-                    WipeAcidOnDevice(acid);
-                }
-            }
-            else if (em is DeviceStupor stupor)
-            {
-                if (_stuporCooldownTicks <= 0)
-                {
-                    stupor.Fix();
-                    _stuporCooldownTicks = 15;
-                }
+                TryUseCaravanRepairKitOnSlot(slot);
             }
         }
 
-        private void MaintainBrokenDevicesTick(IReadOnlyList<ResolvedDeviceSlot> slots)
+        private bool MaintainBrokenDevicesTick(IReadOnlyList<ResolvedDeviceSlot> slots)
         {
             for (int i = 0; i < slots.Count; i++)
             {
@@ -280,28 +459,32 @@ namespace OneWayTickets.KeyboardMod
                 {
                     RepairDeviceTick(slots[i]);
                     // Wrench repairs one broken device at a time (matching manual wrench behavior)
-                    break;
+                    return true;
                 }
             }
+            return false;
         }
 
-        private void MaintainFiresTick(IReadOnlyList<ResolvedDeviceSlot> slots)
+        private bool MaintainFiresTick(IReadOnlyList<ResolvedDeviceSlot> slots)
         {
+            bool any = false;
             for (int i = 0; i < slots.Count; i++)
             {
                 Device d = slots[i].Device;
                 if (d != null && d.device_emergency is DeviceFired fired && !fired.removed)
                 {
                     ExtinguishDeviceTick(fired);
+                    any = true;
                 }
             }
+            return any;
         }
 
-        private void MaintainVinesTick(IReadOnlyList<ResolvedDeviceSlot> slots)
+        private bool MaintainVinesTick(IReadOnlyList<ResolvedDeviceSlot> slots)
         {
             if (_sawCooldownTicks > 0)
             {
-                return;
+                return false;
             }
 
             for (int i = 0; i < slots.Count; i++)
@@ -311,21 +494,23 @@ namespace OneWayTickets.KeyboardMod
                 {
                     if (CutTopVineOnDevice(slots[i], bind))
                     {
-                        break;
+                        return true;
                     }
                 }
             }
+            return false;
         }
 
-        private void MaintainWetAndAcidTick(IReadOnlyList<ResolvedDeviceSlot> slots)
+        private bool MaintainWetAndAcidTick(IReadOnlyList<ResolvedDeviceSlot> slots)
         {
             if (_ragCooldownTicks > 0)
             {
-                return;
+                return false;
             }
 
             int ragLevel = GetToolLevel(Config.current != null ? Config.current.highlight_wipe_id : 4);
             bool isGlobalDrier = ragLevel >= 3; // Drier wipes all devices simultaneously
+            bool any = false;
 
             for (int i = 0; i < slots.Count; i++)
             {
@@ -338,21 +523,24 @@ namespace OneWayTickets.KeyboardMod
                 if (d.device_emergency is DeviceAcid acid && acid.acids != null && acid.acids.Count > 0)
                 {
                     WipeAcidOnDevice(acid);
+                    any = true;
                     if (!isGlobalDrier) break;
                 }
                 else if (d.device_emergency is DeviceWet wet && wet.waterdrops != null && wet.waterdrops.Count > 0)
                 {
                     WipeWaterOnDevice(wet);
+                    any = true;
                     if (!isGlobalDrier) break;
                 }
             }
+            return any;
         }
 
-        private void MaintainStuporDevicesTick(IReadOnlyList<ResolvedDeviceSlot> slots)
+        private bool MaintainStuporDevicesTick(IReadOnlyList<ResolvedDeviceSlot> slots)
         {
             if (_stuporCooldownTicks > 0)
             {
-                return;
+                return false;
             }
 
             for (int i = 0; i < slots.Count; i++)
@@ -362,9 +550,77 @@ namespace OneWayTickets.KeyboardMod
                 {
                     stupor.Fix();
                     _stuporCooldownTicks = 15;
-                    break;
+                    return true;
                 }
             }
+            return false;
+        }
+
+        private bool TryUseCaravanRepairKitOnSlot(ResolvedDeviceSlot slot)
+        {
+            Widget_Fix_Context fixCtx = Singleton<Widget_Fix_Context>.instance;
+            if (fixCtx == null || fixCtx.current_fix_amount <= 0f || slot.UiView == null || slot.Device == null)
+            {
+                return false;
+            }
+
+            if (slot.Device.current_hp >= slot.Device.max_hp)
+            {
+                return false;
+            }
+
+            fixCtx.Fix(slot.UiView);
+            return true;
+        }
+
+        private bool TryUseCaravanRepairKitOnDamaged(IReadOnlyList<ResolvedDeviceSlot> slots, out string message)
+        {
+            message = string.Empty;
+            Widget_Fix_Context fixCtx = Singleton<Widget_Fix_Context>.instance;
+            if (fixCtx == null || fixCtx.current_fix_amount <= 0f)
+            {
+                return false;
+            }
+
+            // Find the device with the lowest HP ratio
+            int bestIdx = -1;
+            float lowestRatio = 1f;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                Device d = slots[i].Device;
+                if (d != null && slots[i].UiView != null && d.max_hp > 0 && d.current_hp < d.max_hp)
+                {
+                    float ratio = (float)d.current_hp / d.max_hp;
+                    if (ratio < lowestRatio)
+                    {
+                        lowestRatio = ratio;
+                        bestIdx = i;
+                    }
+                }
+            }
+
+            if (bestIdx >= 0)
+            {
+                ResolvedDeviceSlot target = slots[bestIdx];
+                fixCtx.Fix(target.UiView);
+                message = $"已使用车载维修包恢复 {bestIdx + 1} 号位设备耐久 ({target.Device.current_hp}/{target.Device.max_hp})";
+                return true;
+            }
+
+            // Or heal caravan HP if damaged
+            WorldContext wctx = Singleton<WorldContext>.instance;
+            if (wctx != null && wctx.caravan_hp < wctx.caravan_hp_max)
+            {
+                CaravanFixArea caravanArea = UnityEngine.Object.FindObjectOfType<CaravanFixArea>();
+                if (caravanArea != null)
+                {
+                    fixCtx.Fix(caravanArea);
+                    message = $"已使用车载维修包恢复车体耐久 ({wctx.caravan_hp}/{wctx.caravan_hp_max})";
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void RepairDeviceTick(ResolvedDeviceSlot slot)
@@ -561,12 +817,12 @@ namespace OneWayTickets.KeyboardMod
             }
         }
 
-        private void TryWakeUpAllComaCharacters(bool isKeyDown)
+        private bool TryWakeUpAllComaCharacters(bool isKeyDown)
         {
             Mission mission = Singleton<Mission>.instance;
             if (mission == null || !mission.try_get_mgr("CharacterMgr", out CharacterMgr charMgr) || charMgr?.characters == null)
             {
-                return;
+                return false;
             }
 
             Config cfg = Config.current;
@@ -575,7 +831,7 @@ namespace OneWayTickets.KeyboardMod
             // For level 0 click tools (Hammer/ScreamingChicken), trigger on keydown or every 18 ticks while held
             if (wakeToolLevel <= 0 && !isKeyDown && _wakeUpTapCooldownTicks > 0)
             {
-                return;
+                return false;
             }
 
             bool wokeAny = false;
@@ -584,7 +840,7 @@ namespace OneWayTickets.KeyboardMod
                 Character c = charMgr.characters[i];
                 if (c != null && c.state is Coma)
                 {
-                    ApplyWakeUpTrigger(c, wakeToolLevel <= 0);
+                    ApplyWakeUpTrigger(c, isKeyDown || wakeToolLevel <= 0);
                     wokeAny = true;
                     // Only AED (level >= 3) wakes all characters simultaneously in 1 tick; others wake the first comatose character
                     if (wakeToolLevel < 3)
@@ -598,6 +854,7 @@ namespace OneWayTickets.KeyboardMod
             {
                 _wakeUpTapCooldownTicks = 18;
             }
+            return wokeAny;
         }
 
         private void ApplyWakeUpTrigger(Character c, bool useTapEffect)

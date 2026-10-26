@@ -1,0 +1,755 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 840" width="100%" height="100%">
+  <defs>
+    <!-- Soft outer shadow for keyboard case and cards -->
+    <filter id="caseShadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#1E293B" flood-opacity="0.14"/>
+    </filter>
+    <filter id="cardShadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#334155" flood-opacity="0.08"/>
+    </filter>
+    <filter id="keyShadow" x="-6%" y="-6%" width="112%" height="118%">
+      <feDropShadow dx="0" dy="3" stdDeviation="1.5" flood-color="#0F172A" flood-opacity="0.18"/>
+    </filter>
+
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#EFF6FF"/>
+    </linearGradient>
+
+    <!-- Keyboard Case Gradients -->
+    <linearGradient id="kbCaseOuter" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>
+    </linearGradient>
+    <linearGradient id="kbCaseInner" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#CBD5E1"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+
+    <!-- Neutral Keycap -->
+    <linearGradient id="keyNeutralBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#CBD5E1"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+    <linearGradient id="keyNeutralTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F1F5F9"/>
+    </linearGradient>
+
+    <!-- Pink Keycap: Left Hand Repair (QWERT) -->
+    <linearGradient id="keyPinkBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F43F5E"/>
+      <stop offset="100%" stop-color="#E11D48"/>
+    </linearGradient>
+    <linearGradient id="keyPinkTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE4E6"/>
+      <stop offset="100%" stop-color="#FECDD3"/>
+    </linearGradient>
+
+    <!-- Orange Keycap: Left Hand Weapons (ASDFG) -->
+    <linearGradient id="keyOrangeBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <linearGradient id="keyOrangeTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FDE68A"/>
+    </linearGradient>
+
+    <!-- Sky Blue Keycap: CapsLock & Driving (ZXCV) -->
+    <linearGradient id="keySkyBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#0369A1"/>
+    </linearGradient>
+    <linearGradient id="keySkyTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#BAE6FD"/>
+    </linearGradient>
+
+    <!-- Amber/Gold Keycap: Modifier Combo Keys (Shift / Alt / Ctrl) -->
+    <linearGradient id="keyModBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#64748B"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="keyModTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+
+    <!-- Green Keycap: Right Hand Crew (YUIOP[) -->
+    <linearGradient id="keyGreenBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="keyGreenTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D1FAE5"/>
+      <stop offset="100%" stop-color="#A7F3D0"/>
+    </linearGradient>
+
+    <!-- Indigo Blue Keycap: Right Hand Tools (HJKL) -->
+    <linearGradient id="keyToolBlueBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="keyToolBlueTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#DBEAFE"/>
+      <stop offset="100%" stop-color="#BFDBFE"/>
+    </linearGradient>
+
+    <!-- Purple Keycap: WakeUp / AutoAssign (; ' ]) & F9/F10 -->
+    <linearGradient id="keyPurpleBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#6D28D9"/>
+    </linearGradient>
+    <linearGradient id="keyPurpleTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#EDE9FE"/>
+      <stop offset="100%" stop-color="#DDD6FE"/>
+    </linearGradient>
+
+    <!-- Cyan/Teal Keycap: Spacebar Emergency Repair -->
+    <linearGradient id="keyCyanBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0D9488"/>
+      <stop offset="100%" stop-color="#0F766E"/>
+    </linearGradient>
+    <linearGradient id="keyCyanTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#CCFBF1"/>
+      <stop offset="100%" stop-color="#99F6E4"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    .font-main { font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "SimHei", sans-serif; }
+    .title { font-size: 36px; font-weight: 900; fill: #0F172A; letter-spacing: 1px; }
+    .subtitle { font-size: 16px; font-weight: 700; fill: #334155; }
+    .k-char { font-size: 17px; font-weight: 800; fill: #0F172A; text-anchor: middle; }
+    .k-sub { font-size: 12px; font-weight: 700; fill: #1E293B; text-anchor: middle; }
+    .k-neutral-char { font-size: 13px; font-weight: 600; fill: #475569; text-anchor: middle; }
+    .k-mod-char { font-size: 13px; font-weight: 800; fill: #1E293B; text-anchor: middle; }
+    .k-mod-sub { font-size: 10.5px; font-weight: 700; fill: #475569; text-anchor: middle; }
+    .card-title { font-size: 15px; font-weight: 800; }
+    .card-key { font-size: 13px; font-weight: 800; text-anchor: middle; }
+    .card-desc { font-size: 13px; font-weight: 700; fill: #1E293B; }
+    .card-note { font-size: 11.5px; font-weight: 600; fill: #475569; }
+  </style>
+
+  <!-- Background -->
+  <rect width="1240" height="840" rx="20" fill="url(#bgGrad)"/>
+
+  <!-- ==================== HEADER ==================== -->
+  <text x="540" y="54" class="font-main title" text-anchor="middle">《再再启程》键盘 Mod 键位总览</text>
+
+  <!-- Subtitle Pill -->
+  <rect x="330" y="70" width="420" height="34" rx="17" fill="#E2E8F0"/>
+  <text x="540" y="93" class="font-main subtitle" text-anchor="middle">告别鼠标手 · 双手不离主行 · 常用键位一眼看懂</text>
+
+  <!-- Top-Right F9 / F10 Callout Box -->
+  <g filter="url(#cardShadow)">
+    <rect x="935" y="34" width="265" height="68" rx="14" fill="#FAF5FF" stroke="#C4B5FD" stroke-width="1.8"/>
+    <circle cx="964" cy="56" r="12" fill="#7C3AED"/>
+    <text x="964" y="61" class="font-main" font-size="13" font-weight="900" fill="#FFFFFF" text-anchor="middle">💡</text>
+    <text x="984" y="61" class="font-main" font-size="15" font-weight="800" fill="#5B21B6">系统提示键</text>
+    <text x="952" y="87" class="font-main" font-size="13" font-weight="800" fill="#4C1D95">F9</text>
+    <text x="974" y="87" class="font-main" font-size="12.5" font-weight="600" fill="#334155">提示开关</text>
+    <line x1="1035" y1="74" x2="1035" y2="90" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="1046" y="87" class="font-main" font-size="13" font-weight="800" fill="#4C1D95">F10</text>
+    <text x="1076" y="87" class="font-main" font-size="12.5" font-weight="600" fill="#334155">热重载改键配置</text>
+  </g>
+  <!-- Dotted connector from F9/F10 callout to F9/F10 keys -->
+  <path d="M 935 68 L 900 68 L 900 138" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="4,4"/>
+  <circle cx="900" cy="138" r="4" fill="#8B5CF6"/>
+  <circle cx="968" cy="138" r="4" fill="#8B5CF6"/>
+
+  <!-- ==================== KEYBOARD BODY ==================== -->
+  <g filter="url(#caseShadow)">
+    <!-- Outer bezel -->
+    <rect x="36" y="122" width="1168" height="432" rx="26" fill="url(#kbCaseOuter)" stroke="#FFFFFF" stroke-width="2"/>
+    <!-- Inner keybed -->
+    <rect x="52" y="138" width="1136" height="400" rx="18" fill="url(#kbCaseInner)"/>
+  </g>
+
+  <!-- ==================== ROW 0: ESC & F1-F12 (y=148, h=54) ==================== -->
+  <g class="font-main" filter="url(#keyShadow)">
+    <!-- Esc -->
+    <g transform="translate(62, 148)">
+      <rect width="72" height="54" rx="10" fill="url(#keyNeutralBase)"/>
+      <rect x="3" y="2" width="66" height="46" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="36" y="30" class="k-neutral-char">Esc</text>
+    </g>
+    <!-- F1 - F4 -->
+    <g transform="translate(164, 148)">
+      <rect width="66" height="54" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="60" height="46" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="33" y="30" class="k-neutral-char">F1</text>
+    </g>
+    <g transform="translate(236, 148)">
+      <rect width="66" height="54" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="60" height="46" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="33" y="30" class="k-neutral-char">F2</text>
+    </g>
+    <g transform="translate(308, 148)">
+      <rect width="66" height="54" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="60" height="46" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="33" y="30" class="k-neutral-char">F3</text>
+    </g>
+    <g transform="translate(380, 148)">
+      <rect width="66" height="54" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="60" height="46" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="33" y="30" class="k-neutral-char">F4</text>
+    </g>
+    <!-- F5 - F8 -->
+    <g transform="translate(476, 148)">
+      <rect width="66" height="54" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="60" height="46" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="33" y="30" class="k-neutral-char">F5</text>
+    </g>
+    <g transform="translate(548, 148)">
+      <rect width="66" height="54" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="60" height="46" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="33" y="30" class="k-neutral-char">F6</text>
+    </g>
+    <g transform="translate(620, 148)">
+      <rect width="66" height="54" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="60" height="46" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="33" y="30" class="k-neutral-char">F7</text>
+    </g>
+    <g transform="translate(692, 148)">
+      <rect width="66" height="54" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="60" height="46" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="33" y="30" class="k-neutral-char">F8</text>
+    </g>
+    <!-- F9 (Highlighted Purple) -->
+    <g transform="translate(838, 148)">
+      <rect width="76" height="54" rx="10" fill="url(#keyPurpleBase)"/>
+      <rect x="3" y="2" width="70" height="46" rx="8" fill="url(#keyPurpleTop)"/>
+      <text x="38" y="23" class="k-char" font-size="15">F9</text>
+      <text x="38" y="40" class="k-sub" font-size="11">提示开关</text>
+    </g>
+    <!-- F10 (Highlighted Purple) -->
+    <g transform="translate(920, 148)">
+      <rect width="76" height="54" rx="10" fill="url(#keyPurpleBase)"/>
+      <rect x="3" y="2" width="70" height="46" rx="8" fill="url(#keyPurpleTop)"/>
+      <text x="38" y="23" class="k-char" font-size="15">F10</text>
+      <text x="38" y="40" class="k-sub" font-size="11">立即重载</text>
+    </g>
+    <!-- F11 - F12 -->
+    <g transform="translate(1002, 148)">
+      <rect width="84" height="54" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="78" height="46" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="42" y="30" class="k-neutral-char">F11</text>
+    </g>
+    <g transform="translate(1092, 148)">
+      <rect width="86" height="54" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="80" height="46" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="43" y="30" class="k-neutral-char">F12</text>
+    </g>
+  </g>
+
+  <!-- ==================== ROW 1: NUMBER ROW (y=210, h=60) ==================== -->
+  <g class="font-main" filter="url(#keyShadow)">
+    <!-- ~ ` -->
+    <g transform="translate(62, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="24" class="k-neutral-char">~</text><text x="35" y="44" class="k-neutral-char">`</text>
+    </g>
+    <!-- 1 to 6 (with subtle crew alias subtext) -->
+    <g transform="translate(138, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="23" class="k-neutral-char">! 1</text><text x="35" y="43" class="k-mod-sub">兼容1号人</text>
+    </g>
+    <g transform="translate(214, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="23" class="k-neutral-char">@ 2</text><text x="35" y="43" class="k-mod-sub">兼容2号人</text>
+    </g>
+    <g transform="translate(290, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="23" class="k-neutral-char"># 3</text><text x="35" y="43" class="k-mod-sub">兼容3号人</text>
+    </g>
+    <g transform="translate(366, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="23" class="k-neutral-char">$ 4</text><text x="35" y="43" class="k-mod-sub">兼容4号人</text>
+    </g>
+    <g transform="translate(442, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="23" class="k-neutral-char">% 5</text><text x="35" y="43" class="k-mod-sub">兼容5号人</text>
+    </g>
+    <g transform="translate(518, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="23" class="k-neutral-char">^ 6</text><text x="35" y="43" class="k-mod-sub">兼容6号人</text>
+    </g>
+    <!-- 7 to = -->
+    <g transform="translate(594, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="24" class="k-neutral-char">&amp;</text><text x="35" y="44" class="k-neutral-char">7</text>
+    </g>
+    <g transform="translate(670, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="24" class="k-neutral-char">*</text><text x="35" y="44" class="k-neutral-char">8</text>
+    </g>
+    <g transform="translate(746, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="24" class="k-neutral-char">(</text><text x="35" y="44" class="k-neutral-char">9</text>
+    </g>
+    <g transform="translate(822, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="24" class="k-neutral-char">)</text><text x="35" y="44" class="k-neutral-char">0</text>
+    </g>
+    <g transform="translate(898, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="24" class="k-neutral-char">-</text><text x="35" y="44" class="k-neutral-char">-</text>
+    </g>
+    <g transform="translate(974, 210)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="24" class="k-neutral-char">+</text><text x="35" y="44" class="k-neutral-char">=</text>
+    </g>
+    <!-- Backspace -->
+    <g transform="translate(1050, 210)">
+      <rect width="128" height="60" rx="10" fill="url(#keyModBase)"/><rect x="3" y="2" width="122" height="52" rx="8" fill="url(#keyModTop)"/>
+      <text x="64" y="25" class="k-mod-char">Backspace</text>
+      <text x="64" y="44" class="k-mod-sub">撤回选中船员</text>
+    </g>
+  </g>
+
+  <!-- ==================== ROW 2: TOP ALPHA ROW (y=278, h=62) ==================== -->
+  <g class="font-main" filter="url(#keyShadow)">
+    <!-- Tab (Neutral now) -->
+    <g transform="translate(62, 278)">
+      <rect width="102" height="62" rx="10" fill="url(#keyNeutralBase)"/>
+      <rect x="3" y="2" width="96" height="54" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="51" y="34" class="k-neutral-char">Tab</text>
+    </g>
+    <!-- Q W E R T (Pink: Left-Hand Per-Slot Repair) -->
+    <g transform="translate(170, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyPinkBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyPinkTop)"/>
+      <text x="35" y="26" class="k-char">Q</text><text x="35" y="46" class="k-sub">修 1</text>
+    </g>
+    <g transform="translate(246, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyPinkBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyPinkTop)"/>
+      <text x="35" y="26" class="k-char">W</text><text x="35" y="46" class="k-sub">修 2</text>
+    </g>
+    <g transform="translate(322, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyPinkBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyPinkTop)"/>
+      <text x="35" y="26" class="k-char">E</text><text x="35" y="46" class="k-sub">修 3</text>
+    </g>
+    <g transform="translate(398, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyPinkBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyPinkTop)"/>
+      <text x="35" y="26" class="k-char">R</text><text x="35" y="46" class="k-sub">修 4</text>
+    </g>
+    <g transform="translate(474, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyPinkBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyPinkTop)"/>
+      <text x="35" y="26" class="k-char">T</text><text x="35" y="46" class="k-sub">修 5</text>
+    </g>
+    <!-- Y U I O P [ (Green: Right-Hand Crew 1-6) -->
+    <g transform="translate(550, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyGreenBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyGreenTop)"/>
+      <text x="35" y="26" class="k-char">Y</text><text x="35" y="46" class="k-sub">1号人</text>
+    </g>
+    <g transform="translate(626, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyGreenBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyGreenTop)"/>
+      <text x="35" y="26" class="k-char">U</text><text x="35" y="46" class="k-sub">2号人</text>
+    </g>
+    <g transform="translate(702, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyGreenBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyGreenTop)"/>
+      <text x="35" y="26" class="k-char">I</text><text x="35" y="46" class="k-sub">3号人</text>
+    </g>
+    <g transform="translate(778, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyGreenBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyGreenTop)"/>
+      <text x="35" y="26" class="k-char">O</text><text x="35" y="46" class="k-sub">4号人</text>
+    </g>
+    <g transform="translate(854, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyGreenBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyGreenTop)"/>
+      <text x="35" y="26" class="k-char">P</text><text x="35" y="46" class="k-sub">5号人</text>
+    </g>
+    <g transform="translate(930, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyGreenBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyGreenTop)"/>
+      <text x="35" y="26" class="k-char">[</text><text x="35" y="46" class="k-sub">6号人</text>
+    </g>
+    <!-- ] (Purple alias for Auto-Assign) -->
+    <g transform="translate(1006, 278)">
+      <rect width="70" height="62" rx="10" fill="url(#keyPurpleBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyPurpleTop)"/>
+      <text x="35" y="26" class="k-char">]</text><text x="35" y="46" class="k-sub">自动派人</text>
+    </g>
+    <!-- \ | -->
+    <g transform="translate(1082, 278)">
+      <rect width="96" height="62" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="90" height="54" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="48" y="26" class="k-neutral-char">|</text><text x="48" y="46" class="k-neutral-char">\</text>
+    </g>
+  </g>
+
+  <!-- ==================== ROW 3: HOME ROW (y=348, h=62) ==================== -->
+  <g class="font-main" filter="url(#keyShadow)">
+    <!-- Caps Lock (Sky Blue: Full Auto-Fire Toggle) -->
+    <g transform="translate(62, 348)">
+      <rect width="120" height="62" rx="10" fill="url(#keySkyBase)"/>
+      <rect x="3" y="2" width="114" height="54" rx="8" fill="url(#keySkyTop)"/>
+      <!-- Green LED Indicator dot on Caps Lock -->
+      <circle cx="104" cy="12" r="4" fill="#10B981" stroke="#047857" stroke-width="1"/>
+      <text x="58" y="26" class="k-char" font-size="14">Caps Lock</text>
+      <text x="58" y="46" class="k-sub">全武器托管</text>
+    </g>
+    <!-- A S D F G (Orange: Left-Hand Weapons 1-5) -->
+    <g transform="translate(188, 348)">
+      <rect width="70" height="62" rx="10" fill="url(#keyOrangeBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyOrangeTop)"/>
+      <text x="35" y="26" class="k-char">A</text><text x="35" y="46" class="k-sub">1号武</text>
+    </g>
+    <g transform="translate(264, 348)">
+      <rect width="70" height="62" rx="10" fill="url(#keyOrangeBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyOrangeTop)"/>
+      <text x="35" y="26" class="k-char">S</text><text x="35" y="46" class="k-sub">2号武</text>
+    </g>
+    <g transform="translate(340, 348)">
+      <rect width="70" height="62" rx="10" fill="url(#keyOrangeBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyOrangeTop)"/>
+      <text x="35" y="26" class="k-char">D</text><text x="35" y="46" class="k-sub">3号武</text>
+    </g>
+    <g transform="translate(416, 348)">
+      <rect width="70" height="62" rx="10" fill="url(#keyOrangeBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyOrangeTop)"/>
+      <text x="35" y="26" class="k-char">F</text><text x="35" y="46" class="k-sub">4号武</text>
+      <!-- Home row tactile bump on F -->
+      <line x1="27" y1="51" x2="43" y2="51" stroke="#B45309" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(492, 348)">
+      <rect width="70" height="62" rx="10" fill="url(#keyOrangeBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyOrangeTop)"/>
+      <text x="35" y="26" class="k-char">G</text><text x="35" y="46" class="k-sub">5号武</text>
+    </g>
+    <!-- H J K L (Tool Blue: Right-Hand Toolbox) -->
+    <g transform="translate(568, 348)">
+      <rect width="70" height="62" rx="10" fill="url(#keyToolBlueBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyToolBlueTop)"/>
+      <text x="35" y="26" class="k-char">H</text><text x="35" y="46" class="k-sub">扳手</text>
+    </g>
+    <g transform="translate(644, 348)">
+      <rect width="70" height="62" rx="10" fill="url(#keyToolBlueBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyToolBlueTop)"/>
+      <text x="35" y="26" class="k-char">J</text><text x="35" y="46" class="k-sub">灭火</text>
+      <!-- Home row tactile bump on J -->
+      <line x1="27" y1="51" x2="43" y2="51" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(720, 348)">
+      <rect width="70" height="62" rx="10" fill="url(#keyToolBlueBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyToolBlueTop)"/>
+      <text x="35" y="26" class="k-char">K</text><text x="35" y="46" class="k-sub">锯子</text>
+    </g>
+    <g transform="translate(796, 348)">
+      <rect width="70" height="62" rx="10" fill="url(#keyToolBlueBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyToolBlueTop)"/>
+      <text x="35" y="26" class="k-char">L</text><text x="35" y="46" class="k-sub">抹布</text>
+    </g>
+    <!-- ; and ' (Purple: WakeUp & Auto-Assign) -->
+    <g transform="translate(872, 348)">
+      <rect width="70" height="62" rx="10" fill="url(#keyPurpleBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyPurpleTop)"/>
+      <text x="35" y="26" class="k-char">;</text><text x="35" y="46" class="k-sub">唤醒人</text>
+    </g>
+    <g transform="translate(948, 348)">
+      <rect width="70" height="62" rx="10" fill="url(#keyPurpleBase)"/><rect x="3" y="2" width="64" height="54" rx="8" fill="url(#keyPurpleTop)"/>
+      <text x="35" y="26" class="k-char">'</text><text x="35" y="46" class="k-sub">自动派人</text>
+    </g>
+    <!-- Enter -->
+    <g transform="translate(1024, 348)">
+      <rect width="154" height="62" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="148" height="54" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="77" y="35" class="k-neutral-char">Enter</text>
+    </g>
+  </g>
+
+  <!-- ==================== ROW 4: BOTTOM ALPHA ROW (y=418, h=60) ==================== -->
+  <g class="font-main" filter="url(#keyShadow)">
+    <!-- Left Shift (Modifier Highlight) -->
+    <g transform="translate(62, 418)">
+      <rect width="148" height="60" rx="10" fill="url(#keyModBase)"/>
+      <rect x="3" y="2" width="142" height="52" rx="8" fill="url(#keyModTop)"/>
+      <text x="74" y="24" class="k-mod-char">Shift (长按/点按)</text>
+      <text x="74" y="43" class="k-mod-sub">+A~G 副操作2(磨刀/上膛)</text>
+    </g>
+    <!-- Z X C V (Sky Blue: Driving & Wheel) -->
+    <g transform="translate(216, 418)">
+      <rect width="70" height="60" rx="10" fill="url(#keySkyBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keySkyTop)"/>
+      <text x="35" y="25" class="k-char">Z</text><text x="35" y="44" class="k-sub">刹车</text>
+    </g>
+    <g transform="translate(292, 418)">
+      <rect width="70" height="60" rx="10" fill="url(#keySkyBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keySkyTop)"/>
+      <text x="35" y="25" class="k-char">X</text><text x="35" y="44" class="k-sub">灵能加速</text>
+    </g>
+    <g transform="translate(368, 418)">
+      <rect width="70" height="60" rx="10" fill="url(#keySkyBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keySkyTop)"/>
+      <text x="35" y="25" class="k-char">C</text><text x="35" y="44" class="k-sub">风箱</text>
+    </g>
+    <g transform="translate(444, 418)">
+      <rect width="70" height="60" rx="10" fill="url(#keySkyBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keySkyTop)"/>
+      <text x="35" y="25" class="k-char">V</text><text x="35" y="44" class="k-sub">车轮技能</text>
+    </g>
+    <!-- B N M , . / -->
+    <g transform="translate(520, 418)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="34" class="k-neutral-char">B</text>
+    </g>
+    <g transform="translate(596, 418)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="34" class="k-neutral-char">N</text>
+    </g>
+    <g transform="translate(672, 418)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="34" class="k-neutral-char">M</text>
+    </g>
+    <g transform="translate(748, 418)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="24" class="k-neutral-char">&lt;</text><text x="35" y="44" class="k-neutral-char">,</text>
+    </g>
+    <g transform="translate(824, 418)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="24" class="k-neutral-char">&gt;</text><text x="35" y="44" class="k-neutral-char">.</text>
+    </g>
+    <g transform="translate(900, 418)">
+      <rect width="70" height="60" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="64" height="52" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="35" y="24" class="k-neutral-char">?</text><text x="35" y="44" class="k-neutral-char">/</text>
+    </g>
+    <!-- Right Shift -->
+    <g transform="translate(976, 418)">
+      <rect width="202" height="60" rx="10" fill="url(#keyModBase)"/><rect x="3" y="2" width="196" height="52" rx="8" fill="url(#keyModTop)"/>
+      <text x="101" y="34" class="k-mod-char">Shift</text>
+    </g>
+  </g>
+
+  <!-- ==================== ROW 5: SPACEBAR ROW (y=486, h=44) ==================== -->
+  <g class="font-main" filter="url(#keyShadow)">
+    <!-- Left Ctrl -->
+    <g transform="translate(62, 486)">
+      <rect width="84" height="44" rx="10" fill="url(#keyModBase)"/><rect x="3" y="2" width="78" height="36" rx="8" fill="url(#keyModTop)"/>
+      <text x="42" y="18" class="k-mod-char" font-size="12">Ctrl</text>
+      <text x="42" y="33" class="k-mod-sub" font-size="9.5">+A~G单槽托管</text>
+    </g>
+    <!-- Win -->
+    <g transform="translate(152, 486)">
+      <rect width="80" height="44" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="74" height="36" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="40" y="25" class="k-neutral-char">Win</text>
+    </g>
+    <!-- Left Alt -->
+    <g transform="translate(238, 486)">
+      <rect width="96" height="44" rx="10" fill="url(#keyModBase)"/><rect x="3" y="2" width="90" height="36" rx="8" fill="url(#keyModTop)"/>
+      <text x="48" y="18" class="k-mod-char" font-size="12">Alt (长按/点按)</text>
+      <text x="48" y="33" class="k-mod-sub" font-size="9.5">+A~G校准/搬弹</text>
+    </g>
+    <!-- Spacebar (Cyan: Global Smart Emergency Repair) -->
+    <g transform="translate(340, 486)">
+      <rect width="484" height="44" rx="10" fill="url(#keyCyanBase)"/>
+      <rect x="3" y="2" width="478" height="36" rx="8" fill="url(#keyCyanTop)"/>
+      <text x="242" y="18" class="k-char" font-size="15">Space 紧急抢修</text>
+      <text x="242" y="34" class="k-sub" font-size="11.5">按住 / 连按：全车按紧急度自动拎工具抢修</text>
+    </g>
+    <!-- Right Alt -->
+    <g transform="translate(830, 486)">
+      <rect width="80" height="44" rx="10" fill="url(#keyModBase)"/><rect x="3" y="2" width="74" height="36" rx="8" fill="url(#keyModTop)"/>
+      <text x="40" y="18" class="k-mod-char" font-size="12">Alt</text>
+      <text x="40" y="33" class="k-mod-sub" font-size="9.5">+人键换替补</text>
+    </g>
+    <!-- Fn / Menu / Right Ctrl -->
+    <g transform="translate(916, 486)">
+      <rect width="80" height="44" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="74" height="36" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="40" y="25" class="k-neutral-char">Fn</text>
+    </g>
+    <g transform="translate(1002, 486)">
+      <rect width="80" height="44" rx="10" fill="url(#keyNeutralBase)"/><rect x="3" y="2" width="74" height="36" rx="8" fill="url(#keyNeutralTop)"/>
+      <text x="40" y="25" class="k-neutral-char">☰</text>
+    </g>
+    <g transform="translate(1088, 486)">
+      <rect width="90" height="44" rx="10" fill="url(#keyModBase)"/><rect x="3" y="2" width="84" height="36" rx="8" fill="url(#keyModTop)"/>
+      <text x="45" y="18" class="k-mod-char" font-size="12">Ctrl</text>
+      <text x="45" y="33" class="k-mod-sub" font-size="9.5">+' 持续派人</text>
+    </g>
+  </g>
+
+  <!-- ==================== CONNECTOR LINES TO 6 CARDS ==================== -->
+  <g fill="none" stroke-width="2.2">
+    <!-- 1. Left Repair QWERT -> Card 1 -->
+    <path d="M 205 340 L 126 588" stroke="#F43F5E"/>
+    <circle cx="205" cy="340" r="4" fill="#F43F5E"/>
+    <circle cx="126" cy="588" r="4" fill="#F43F5E"/>
+
+    <!-- 2. Left Weapons ASDFG -> Card 2 -->
+    <path d="M 300 410 L 322 588" stroke="#D97706"/>
+    <circle cx="300" cy="410" r="4" fill="#D97706"/>
+    <circle cx="322" cy="588" r="4" fill="#D97706"/>
+
+    <!-- 3. Function Control CapsLock / ZXCV -> Card 3 -->
+    <path d="M 403 478 L 518 588" stroke="#0284C7"/>
+    <circle cx="403" cy="478" r="4" fill="#0284C7"/>
+    <circle cx="518" cy="588" r="4" fill="#0284C7"/>
+
+    <!-- 4. Right Crew YUIOP[ -> Card 4 -->
+    <path d="M 660 340 L 714 588" stroke="#10B981"/>
+    <circle cx="660" cy="340" r="4" fill="#10B981"/>
+    <circle cx="714" cy="588" r="4" fill="#10B981"/>
+
+    <!-- 5. Right Tools HJKL;' -> Card 5 -->
+    <path d="M 755 410 L 910 588" stroke="#6366F1"/>
+    <circle cx="755" cy="410" r="4" fill="#6366F1"/>
+    <circle cx="910" cy="588" r="4" fill="#6366F1"/>
+
+    <!-- 6. Spacebar -> Card 6 -->
+    <path d="M 582 530 L 582 564 L 1106 564 L 1106 588" stroke="#0D9488"/>
+    <circle cx="582" cy="530" r="4" fill="#0D9488"/>
+    <circle cx="1106" cy="588" r="4" fill="#0D9488"/>
+  </g>
+
+  <!-- ==================== 6 ANNOTATION CARDS (y=588, h=222) ==================== -->
+  <g class="font-main" filter="url(#cardShadow)">
+
+    <!-- CARD 1: 左手抢修 QWERT -->
+    <g transform="translate(36, 588)">
+      <rect width="182" height="222" rx="16" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.5"/>
+      <circle cx="28" cy="28" r="13" fill="#F43F5E"/>
+      <text x="28" y="33" font-size="13" fill="#FFFFFF" text-anchor="middle">🔧</text>
+      <text x="48" y="33" class="card-title" fill="#BE123C">左手抢修 QWERT</text>
+
+      <g transform="translate(22, 52)">
+        <rect width="26" height="22" rx="6" fill="#FFE4E6" stroke="#FDA4AF"/><text x="13" y="16" class="card-key" fill="#BE123C">Q</text>
+        <text x="38" y="16" class="card-desc">修 1 号槽</text>
+      </g>
+      <g transform="translate(22, 80)">
+        <rect width="26" height="22" rx="6" fill="#FFE4E6" stroke="#FDA4AF"/><text x="13" y="16" class="card-key" fill="#BE123C">W</text>
+        <text x="38" y="16" class="card-desc">修 2 号槽</text>
+      </g>
+      <g transform="translate(22, 108)">
+        <rect width="26" height="22" rx="6" fill="#FFE4E6" stroke="#FDA4AF"/><text x="13" y="16" class="card-key" fill="#BE123C">E</text>
+        <text x="38" y="16" class="card-desc">修 3 号槽</text>
+      </g>
+      <g transform="translate(22, 136)">
+        <rect width="26" height="22" rx="6" fill="#FFE4E6" stroke="#FDA4AF"/><text x="13" y="16" class="card-key" fill="#BE123C">R</text>
+        <text x="38" y="16" class="card-desc">修 4 号槽</text>
+      </g>
+      <g transform="translate(22, 164)">
+        <rect width="26" height="22" rx="6" fill="#FFE4E6" stroke="#FDA4AF"/><text x="13" y="16" class="card-key" fill="#BE123C">T</text>
+        <text x="38" y="16" class="card-desc">修 5 号槽</text>
+      </g>
+      <text x="91" y="206" class="card-note" text-anchor="middle">按住持续除酸/灭火/割藤/修血</text>
+    </g>
+
+    <!-- CARD 2: 左手武器 ASDFG -->
+    <g transform="translate(232, 588)">
+      <rect width="182" height="222" rx="16" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1.5"/>
+      <circle cx="28" cy="28" r="13" fill="#D97706"/>
+      <text x="28" y="33" font-size="13" fill="#FFFFFF" text-anchor="middle">⚔️</text>
+      <text x="48" y="33" class="card-title" fill="#B45309">左手武器 ASDFG</text>
+
+      <g transform="translate(22, 52)">
+        <rect width="26" height="22" rx="6" fill="#FEF3C7" stroke="#FCD34D"/><text x="13" y="16" class="card-key" fill="#B45309">A</text>
+        <text x="38" y="16" class="card-desc">1 号武器</text>
+      </g>
+      <g transform="translate(22, 80)">
+        <rect width="26" height="22" rx="6" fill="#FEF3C7" stroke="#FCD34D"/><text x="13" y="16" class="card-key" fill="#B45309">S</text>
+        <text x="38" y="16" class="card-desc">2 号武器</text>
+      </g>
+      <g transform="translate(22, 108)">
+        <rect width="26" height="22" rx="6" fill="#FEF3C7" stroke="#FCD34D"/><text x="13" y="16" class="card-key" fill="#B45309">D</text>
+        <text x="38" y="16" class="card-desc">3 号武器</text>
+      </g>
+      <g transform="translate(22, 136)">
+        <rect width="26" height="22" rx="6" fill="#FEF3C7" stroke="#FCD34D"/><text x="13" y="16" class="card-key" fill="#B45309">F</text>
+        <text x="38" y="16" class="card-desc">4 号武器</text>
+      </g>
+      <g transform="translate(22, 164)">
+        <rect width="26" height="22" rx="6" fill="#FEF3C7" stroke="#FCD34D"/><text x="13" y="16" class="card-key" fill="#B45309">G</text>
+        <text x="38" y="16" class="card-desc">5 号武器</text>
+      </g>
+      <text x="91" y="206" class="card-note" text-anchor="middle">+Shift 磨刀/上膛 | +Alt 校准/搬弹</text>
+    </g>
+
+    <!-- CARD 3: 功能控制 Caps / ZXCV -->
+    <g transform="translate(428, 588)">
+      <rect width="182" height="222" rx="16" fill="#F0F9FF" stroke="#7DD3FC" stroke-width="1.5"/>
+      <circle cx="28" cy="28" r="13" fill="#0284C7"/>
+      <text x="28" y="33" font-size="13" fill="#FFFFFF" text-anchor="middle">⚙️</text>
+      <text x="48" y="33" class="card-title" fill="#0369A1">功能控制 Caps/ZXCV</text>
+
+      <g transform="translate(16, 52)">
+        <rect width="46" height="22" rx="6" fill="#E0F2FE" stroke="#7DD3FC"/><text x="23" y="16" class="card-key" fill="#0369A1" font-size="11.5">Caps</text>
+        <text x="54" y="16" class="card-desc">全武器托管</text>
+      </g>
+      <g transform="translate(16, 80)">
+        <rect width="46" height="22" rx="6" fill="#E0F2FE" stroke="#7DD3FC"/><text x="23" y="16" class="card-key" fill="#0369A1">Z</text>
+        <text x="54" y="16" class="card-desc">刹车 (按住)</text>
+      </g>
+      <g transform="translate(16, 108)">
+        <rect width="46" height="22" rx="6" fill="#E0F2FE" stroke="#7DD3FC"/><text x="23" y="16" class="card-key" fill="#0369A1">X</text>
+        <text x="54" y="16" class="card-desc">灵能加速冲刺</text>
+      </g>
+      <g transform="translate(16, 136)">
+        <rect width="46" height="22" rx="6" fill="#E0F2FE" stroke="#7DD3FC"/><text x="23" y="16" class="card-key" fill="#0369A1">C</text>
+        <text x="54" y="16" class="card-desc">风箱 (按住鼓风)</text>
+      </g>
+      <g transform="translate(16, 164)">
+        <rect width="46" height="22" rx="6" fill="#E0F2FE" stroke="#7DD3FC"/><text x="23" y="16" class="card-key" fill="#0369A1">V</text>
+        <text x="54" y="16" class="card-desc">车轮技能/推车</text>
+      </g>
+      <text x="91" y="206" class="card-note" text-anchor="middle">Ctrl+A~G 可单槽开关托管</text>
+    </g>
+
+    <!-- CARD 4: 右手选人 YUIOP[ -->
+    <g transform="translate(624, 588)">
+      <rect width="182" height="222" rx="16" fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.5"/>
+      <circle cx="28" cy="28" r="13" fill="#10B981"/>
+      <text x="28" y="33" font-size="13" fill="#FFFFFF" text-anchor="middle">👤</text>
+      <text x="48" y="33" class="card-title" fill="#047857">右手选人 YUIOP[</text>
+
+      <g transform="translate(22, 48)">
+        <rect width="26" height="21" rx="6" fill="#D1FAE5" stroke="#6EE7B7"/><text x="13" y="15" class="card-key" fill="#047857">Y</text>
+        <text x="38" y="15" class="card-desc">1 号人 (或按1)</text>
+      </g>
+      <g transform="translate(22, 73)">
+        <rect width="26" height="21" rx="6" fill="#D1FAE5" stroke="#6EE7B7"/><text x="13" y="15" class="card-key" fill="#047857">U</text>
+        <text x="38" y="15" class="card-desc">2 号人 (或按2)</text>
+      </g>
+      <g transform="translate(22, 98)">
+        <rect width="26" height="21" rx="6" fill="#D1FAE5" stroke="#6EE7B7"/><text x="13" y="15" class="card-key" fill="#047857">I</text>
+        <text x="38" y="15" class="card-desc">3 号人 (或按3)</text>
+      </g>
+      <g transform="translate(22, 123)">
+        <rect width="26" height="21" rx="6" fill="#D1FAE5" stroke="#6EE7B7"/><text x="13" y="15" class="card-key" fill="#047857">O</text>
+        <text x="38" y="15" class="card-desc">4 号人 (或按4)</text>
+      </g>
+      <g transform="translate(22, 148)">
+        <rect width="26" height="21" rx="6" fill="#D1FAE5" stroke="#6EE7B7"/><text x="13" y="15" class="card-key" fill="#047857">P</text>
+        <text x="38" y="15" class="card-desc">5 号人 (或按5)</text>
+      </g>
+      <g transform="translate(22, 173)">
+        <rect width="26" height="21" rx="6" fill="#D1FAE5" stroke="#6EE7B7"/><text x="13" y="15" class="card-key" fill="#047857">[</text>
+        <text x="38" y="15" class="card-desc">6 号人 (或按6)</text>
+      </g>
+      <text x="91" y="209" class="card-note" text-anchor="middle">选人后按A~G派驻 | 双击撤回</text>
+    </g>
+
+    <!-- CARD 5: 右手工具 HJKL;' -->
+    <g transform="translate(820, 588)">
+      <rect width="182" height="222" rx="16" fill="#EEF2FF" stroke="#A5B4FC" stroke-width="1.5"/>
+      <circle cx="28" cy="28" r="13" fill="#4F46E5"/>
+      <text x="28" y="33" font-size="13" fill="#FFFFFF" text-anchor="middle">🔨</text>
+      <text x="48" y="33" class="card-title" fill="#3730A3">右手工具 HJKL;'</text>
+
+      <g transform="translate(22, 48)">
+        <rect width="26" height="21" rx="6" fill="#DBEAFE" stroke="#93C5FD"/><text x="13" y="15" class="card-key" fill="#1D4ED8">H</text>
+        <text x="38" y="15" class="card-desc">扳手 / 维修包</text>
+      </g>
+      <g transform="translate(22, 73)">
+        <rect width="26" height="21" rx="6" fill="#DBEAFE" stroke="#93C5FD"/><text x="13" y="15" class="card-key" fill="#1D4ED8">J</text>
+        <text x="38" y="15" class="card-desc">灭火器</text>
+      </g>
+      <g transform="translate(22, 98)">
+        <rect width="26" height="21" rx="6" fill="#DBEAFE" stroke="#93C5FD"/><text x="13" y="15" class="card-key" fill="#1D4ED8">K</text>
+        <text x="38" y="15" class="card-desc">锯子 (外层优先)</text>
+      </g>
+      <g transform="translate(22, 123)">
+        <rect width="26" height="21" rx="6" fill="#DBEAFE" stroke="#93C5FD"/><text x="13" y="15" class="card-key" fill="#1D4ED8">L</text>
+        <text x="38" y="15" class="card-desc">抹布 / 吹风筒</text>
+      </g>
+      <g transform="translate(22, 148)">
+        <rect width="26" height="21" rx="6" fill="#EDE9FE" stroke="#C4B5FD"/><text x="13" y="15" class="card-key" fill="#6D28D9">;</text>
+        <text x="38" y="15" class="card-desc">唤醒人 / AED</text>
+      </g>
+      <g transform="translate(22, 173)">
+        <rect width="26" height="21" rx="6" fill="#EDE9FE" stroke="#C4B5FD"/><text x="13" y="15" class="card-key" fill="#6D28D9">'</text>
+        <text x="38" y="15" class="card-desc">一键自动派人</text>
+      </g>
+      <text x="91" y="209" class="card-note" text-anchor="middle">自动拎出工具并放回工具箱</text>
+    </g>
+
+    <!-- CARD 6: 空格键 Space -->
+    <g transform="translate(1016, 588)">
+      <rect width="188" height="222" rx="16" fill="#F0FDFA" stroke="#5EEAD4" stroke-width="1.5"/>
+      <circle cx="28" cy="28" r="13" fill="#0D9488"/>
+      <text x="28" y="33" font-size="13" fill="#FFFFFF" text-anchor="middle">⚡</text>
+      <text x="48" y="33" class="card-title" fill="#0F766E">空格键 Space</text>
+
+      <text x="94" y="84" font-size="19" font-weight="900" fill="#0F172A" text-anchor="middle">全车紧急抢修</text>
+      <text x="94" y="112" font-size="13.5" font-weight="700" fill="#1E293B" text-anchor="middle">按住 / 连按：</text>
+      <text x="94" y="134" font-size="13" font-weight="700" fill="#0F766E" text-anchor="middle">全车自动拎工具抢修</text>
+
+      <rect x="16" y="150" width="156" height="54" rx="10" fill="#CCFBF1"/>
+      <text x="94" y="170" font-size="11.5" font-weight="700" fill="#115E59" text-anchor="middle">自动按危机优先级：</text>
+      <text x="94" y="190" font-size="11" font-weight="600" fill="#134E4A" text-anchor="middle">醒人▸灭火▸除酸▸擦水▸割藤▸修车</text>
+    </g>
+
+  </g>
+</svg>

@@ -221,11 +221,12 @@ namespace OneWayTickets.KeyboardMod
             bool charAuto = inCombat && _charController.IsAutoAssignEnabled;
             if (anyWeaponAuto || charAuto)
             {
+                string globalAutoKey = ModConfig.FormatKeyLabel(cfg.GlobalAutoFireToggleKey);
                 Rect bannerRect = new Rect(x, y - 26f, boxWidth, 24f);
                 string autoParts = anyWeaponAuto && charAuto
-                    ? "🟢 武器[AUTO] + 人物自动派驻中 — 点击此处或按 [Tab] 关闭"
+                    ? $"🟢 武器[AUTO] + 人物自动派驻中 — 点击此处或按 [{globalAutoKey}] 关闭"
                     : anyWeaponAuto
-                        ? "🟢 武器自动托管中 (随时可按键/鼠标接管) — 点击或按 [Tab] 取消"
+                        ? $"🟢 武器自动托管中 (随时可按键/鼠标接管) — 点击或按 [{globalAutoKey}] 取消"
                         : $"🟢 人物持续自动分配中 — 点击或按 [Ctrl+{autoCharKey}] 关闭";
 
                 if (GUI.Button(bannerRect, autoParts, _autoCancelBannerStyle))

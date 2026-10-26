@@ -18,12 +18,12 @@ namespace OneWayTickets.KeyboardMod
         // =====================================================================
         // LEFT HAND
         // =====================================================================
-        // Left Hand Home Row: Weapon / Device slot keys (A S D F G for fixed slots 1-5) + Global Auto-Fire toggle (Tab)
+        // Left Hand Home Row: Weapon / Device slot keys (A S D F G for fixed slots 1-5) + Global Auto-Fire toggle (CapsLock)
         public Key[] WeaponSlotKeys { get; private set; } = new Key[]
         {
             Key.A, Key.S, Key.D, Key.F, Key.G
         };
-        public Key GlobalAutoFireToggleKey { get; private set; } = Key.Tab;
+        public Key GlobalAutoFireToggleKey { get; private set; } = Key.CapsLock;
 
         // Left Hand Upper Row: Per-Slot Toolbox Direct Maintenance keys (Q W E R T, aligned above A S D F G)
         public Key[] SlotMaintainKeys { get; private set; } = new Key[]
@@ -226,6 +226,11 @@ namespace OneWayTickets.KeyboardMod
             if (cleaned == ",") return Key.Comma;
             if (cleaned == ".") return Key.Period;
             if (cleaned == "/") return Key.Slash;
+            if (string.Equals(cleaned, "Caps", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(cleaned, "CapsLock", StringComparison.OrdinalIgnoreCase))
+            {
+                return Key.CapsLock;
+            }
             if (cleaned.Length == 1 && char.IsDigit(cleaned[0]))
             {
                 cleaned = "Digit" + cleaned;
@@ -271,6 +276,7 @@ namespace OneWayTickets.KeyboardMod
                 case Key.Period: return ".";
                 case Key.Slash: return "/";
                 case Key.Backspace: return "Bksp";
+                case Key.CapsLock: return "CapsLock";
             }
             string s = k.ToString();
             if (s.StartsWith("Digit") && s.Length == 6)
@@ -290,12 +296,12 @@ namespace OneWayTickets.KeyboardMod
             sb.AppendLine("# ============================================================================");
             sb.AppendLine();
             sb.AppendLine("[LeftHand_WeaponsAndDriving]");
-            sb.AppendLine("# 左手主排 (A S D F G)：固定 1-5 号武器槽位主操作（最常用放主排）");
+            sb.AppendLine("# 左手主排 (A S D F G + CapsLock)：固定 1-5 号武器槽位主操作（最常用放主排）");
             sb.AppendLine("#   - 点按/按住 A-G：主操作 + 智能闭环（攻击/开火/空仓装填/蓄力）");
-            sb.AppendLine("#   - Ctrl + A-G（或 Tab 全开）：切换武器【自动托管 [AUTO]】");
-            sb.AppendLine("#   - Shift + A-G：独立副操作 2 | Alt + A-G：独立副操作 3");
+            sb.AppendLine("#   - CapsLock（或 Ctrl + A-G）：切换武器【自动托管 [AUTO]】");
+            sb.AppendLine("#   - 长按/点按 Shift + A-G：独立副操作 2 | 长按/点按 Alt + A-G：独立副操作 3");
             sb.AppendLine("WeaponSlotKeys = A, S, D, F, G");
-            sb.AppendLine("GlobalAutoFireToggleKey = Tab");
+            sb.AppendLine("GlobalAutoFireToggleKey = CapsLock");
             sb.AppendLine();
             sb.AppendLine("# 左手上排 (Q W E R T)：固定 1-5 号槽位一键定点抢修（与下方 A-G 一一对应）");
             sb.AppendLine("SlotMaintainKeys = Q, W, E, R, T");

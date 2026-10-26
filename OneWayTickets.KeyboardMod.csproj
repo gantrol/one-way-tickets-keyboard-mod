@@ -12,6 +12,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="src\Installer\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="World">
       <HintPath>$(GameManagedDir)\World.dll</HintPath>
       <Private>false</Private>
@@ -69,5 +73,10 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+
+  <Target Name="UpdateDistAndInstallerExe" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(MSBuildProjectDirectory)\dist" />
+    <Exec Command="&quot;$(WINDIR)\Microsoft.NET\Framework64\v4.0.30319\csc.exe&quot; /nologo /target:winexe /optimize+ /out:&quot;$(MSBuildProjectDirectory)\双击一键安装或卸载Mod.exe&quot; /r:&quot;$(MSBuildProjectDirectory)\dist\Mono.Cecil.dll&quot; /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /resource:&quot;$(MSBuildProjectDirectory)\dist\Mono.Cecil.dll&quot;,Mono.Cecil.dll /resource:&quot;$(MSBuildProjectDirectory)\dist\OneWayTickets.KeyboardMod.dll&quot;,OneWayTickets.KeyboardMod.dll /resource:&quot;$(MSBuildProjectDirectory)\OneWayTickets.KeyboardMod.ini&quot;,OneWayTickets.KeyboardMod.ini &quot;$(MSBuildProjectDirectory)\src\Installer\InstallerProgram.cs&quot;" />
+  </Target>
 
 </Project>

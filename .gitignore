@@ -3,6 +3,7 @@ bin/
 obj/
 *.dll
 *.pdb
+*.log
 !dist/*.dll
 
 # IDE & Editor

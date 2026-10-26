@@ -1,6 +1,6 @@
 # One Way Tickets — Keyboard & QoL Mod Detailed Design
 
-> **[Back to Quick Start (../README_EN.md)](../README_EN.md)** | **[中文详细设计文档 (./DESIGN.md)](./DESIGN.md)**
+> **[Back to Quick Start (../README.md)](../README.md)** | **[中文详细设计文档 (./DESIGN.md)](./DESIGN.md)**
 
 This document describes the internal mechanics, ergonomic two-handed layout, multi-action weapon bindings, stage-aware toolbox progression with pull-out animation, character auto-assign algorithm, and developer build instructions for `OneWayTickets.KeyboardMod`.
 
@@ -79,8 +79,10 @@ Decompiling `World.dll`, `AutoCodes.dll`, and scene assets confirmed that every 
 
 ## 6. Building from Source (Developers Only)
 
-End users only need to double-click `双击安装Mod (Install).bat` (which uses the prebuilt binaries in `dist/`). To rebuild from source after editing `src/*.cs`:
+End users only need to run the standalone installer `双击一键安装或卸载Mod.exe`. To rebuild from source after editing `src/*.cs`:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\Install-Mod.ps1 -BuildFromSource
+dotnet build .\OneWayTickets.KeyboardMod.csproj -c Release
 ```
+
+The Release build automatically updates `dist\OneWayTickets.KeyboardMod.dll` and regenerates the standalone installer `双击一键安装或卸载Mod.exe`, which does not require `.ps1` or `.bat` scripts.

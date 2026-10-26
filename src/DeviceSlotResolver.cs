@@ -19,15 +19,18 @@ namespace OneWayTickets.KeyboardMod
     }
 
     /// <summary>
-    /// Resolves all fixed caravan device slots (1-6) in left-to-right visual order,
-    /// so Q/W/E/R/T/Y and A/S/D/F/G/H always map to fixed physical slot indices
-    /// even when some slots are empty.
+    /// Resolves all fixed caravan weapon/device slots (1-5: slot_back, slot_back_top, slot_top, slot_front_top, slot_front)
+    /// in left-to-right visual order, excluding the bottom-left wheel slot ('device_slot_wheel').
+    /// Q/W/E/R/T and A/S/D/F/G always map to fixed physical weapon slot indices 0..4.
     /// </summary>
     public sealed class DeviceSlotResolver
     {
+        public const int MaxWeaponSlots = 5;
+        public const string WheelSlotName = "device_slot_wheel";
+
         private DeviceMgrView _cachedMgrView;
         private float _lastSearchTime;
-        private readonly List<ResolvedDeviceSlot> _slots = new List<ResolvedDeviceSlot>(8);
+        private readonly List<ResolvedDeviceSlot> _slots = new List<ResolvedDeviceSlot>(MaxWeaponSlots);
 
         public IReadOnlyList<ResolvedDeviceSlot> GetOrderedSlots()
         {
@@ -46,14 +49,14 @@ namespace OneWayTickets.KeyboardMod
                 mission.try_get_mgr("DeviceMgr", out deviceMgr);
             }
 
-            // 1. Primary path: Use DeviceMgr.slots_device (all fixed slots defined on the current caravan)
+            // 1. Primary path: Use DeviceMgr.slots_device (excluding device_slot_wheel)
             //    paired with DeviceMgrView.device_ui_panels_pos for exact left-to-right UI ordering.
             if (deviceMgr?.slots_device != null && deviceMgr.slots_device.Count > 0)
             {
-                List<DeviceSlot> fixedSlots = new List<DeviceSlot>(deviceMgr.slots_device.Count);
+                List<DeviceSlot> fixedSlots = new List<DeviceSlot>(MaxWeaponSlots);
                 foreach (DeviceSlot ds in deviceMgr.slots_device)
                 {
-                    if (ds != null && !string.IsNullOrEmpty(ds._name))
+                    if (ds != null && !string.IsNullOrEmpty(ds._name) && !IsWheelSlot(ds._name))
                     {
                         fixedSlots.Add(ds);
                     }
@@ -61,7 +64,7 @@ namespace OneWayTickets.KeyboardMod
 
                 fixedSlots.Sort((a, b) => CompareFixedSlotsLeftToRight(a, b));
 
-                for (int i = 0; i < fixedSlots.Count; i++)
+                for (int i = 0; i < fixedSlots.Count && i < MaxWeaponSlots; i++)
                 {
                     DeviceSlot ds = fixedSlots[i];
                     DeviceUiPanelPos panel = FindUiPanelForSlot(ds._name);
@@ -82,13 +85,13 @@ namespace OneWayTickets.KeyboardMod
                 return _slots;
             }
 
-            // 2. Fallback path: If DeviceMgr isn't ready yet, inspect active/wood_mask panels in DeviceMgrView
+            // 2. Fallback path: If DeviceMgr isn't ready yet, inspect active/wood_mask panels in DeviceMgrView (excluding wheel)
             if (_cachedMgrView != null && _cachedMgrView.device_ui_panels_pos != null)
             {
-                List<DeviceUiPanelPos> panels = new List<DeviceUiPanelPos>(8);
+                List<DeviceUiPanelPos> panels = new List<DeviceUiPanelPos>(MaxWeaponSlots);
                 foreach (DeviceUiPanelPos panel in _cachedMgrView.device_ui_panels_pos)
                 {
-                    if (panel == null)
+                    if (panel == null || IsWheelSlot(panel.slot_name))
                     {
                         continue;
                     }
@@ -103,7 +106,7 @@ namespace OneWayTickets.KeyboardMod
 
                 panels.Sort((a, b) => GetPanelOrderX(a).CompareTo(GetPanelOrderX(b)));
 
-                for (int i = 0; i < panels.Count; i++)
+                for (int i = 0; i < panels.Count && i < MaxWeaponSlots; i++)
                 {
                     DeviceUiPanelPos panel = panels[i];
                     DeviceUiView uiView = panel.device_ui_view;
@@ -119,6 +122,11 @@ namespace OneWayTickets.KeyboardMod
             }
 
             return _slots;
+        }
+
+        private static bool IsWheelSlot(string slotName)
+        {
+            return string.Equals(slotName, WheelSlotName, StringComparison.OrdinalIgnoreCase);
         }
 
         public bool TryGetSlot(int index, out ResolvedDeviceSlot slot)

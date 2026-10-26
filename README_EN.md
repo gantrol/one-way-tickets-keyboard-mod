@@ -10,7 +10,7 @@ A non-destructive keyboard control and Quality-of-Life (QoL) mod for **One Way T
 
 1. **Instant Toolbox Actions Without Opening or Dragging (Stage-Aware QoL)**
    - **Tap or Hold `Space` for Global Smart Maintenance**: Automatically prioritizes waking stunned characters, extinguishing fires, neutralizing acid, wiping water, cutting vines, kicking sleeping devices, and repairing broken/damaged devices.
-   - **Tap or Hold `A / S / D / F / G / H` for Fixed-Slot Maintenance**: Maps strictly to **Fixed Caravan Slots 1–6** from left to right (keys never shift even if some slots are empty, staying 100% aligned with `Q / W / E / R / T / Y` above).
+   - **Tap or Hold `A / S / D / F / G` for Fixed-Slot Maintenance**: Maps strictly to **Fixed Caravan Weapon Slots 1–5** from left to right (keys never shift even if some slots are empty, staying 100% aligned with `Q / W / E / R / T` above).
    - **Tap or Hold `Z / X / C / V / B` for Stage-Aware Dedicated Tools**:
      - `Z` (Wrench & Caravan Repair Kit): Scales with Wrench upgrade stages (single-way, ratchet, auto-wrench) and automatically triggers the Caravan Repair Kit on damaged devices/hull when no device is at 0 HP.
      - `X` (Extinguisher): Uses your current extinguisher efficiency to put out fires.
@@ -20,17 +20,17 @@ A non-destructive keyboard control and Quality-of-Life (QoL) mod for **One Way T
    - **Instant Visual & Audio Key Feedback**: Every key press highlights the target slot badge in gold (`▶ 1号 抢修[A]!` / `▶ 1号 操控[Q]!`), plays the tool's native SFX, and displays the exact key, tool stage name, and target device in the top banner.
 
 2. **Full Keyboard Weapon Control (1–3 Actions + Manual Override During `[AUTO]`)**
-   - **Primary Action & Smart Loop (Tap/Hold `Q / W / E / R / T / Y`)**:
+   - **Primary Action & Smart Loop (Tap/Hold `Q / W / E / R / T`)**:
      - Tapping or holding immediately triggers the weapon's direct manual action (melee strike, ranged shot, reload step, wheel boost, war drum beat, etc.) while running the smart loop (auto-reload when empty, auto-charge, turret auto-aim).
-   - **Auto-Hosting Mode (`Ctrl + Q~Y` per slot / `Tab` global toggle)**:
+   - **Auto-Hosting Mode (`Ctrl + Q~T` per slot / `Tab` global toggle)**:
      - Automates firing and reloading in the background.
-     - **Seamless Manual Override**: Even while `[AUTO]` is active, you can **press `Q~Y` / `Shift+Q~Y` / `Alt+Q~Y` or use the mouse on the weapon UI at any time**. When interacting with a weapon panel via mouse, background `[AUTO]` automatically yields on that slot so your mouse drag/click is never interrupted.
-     - **Clear Cancel Prompts & Click-to-Cancel**: When `[AUTO]` is active, a top-center banner and green `[🟢自动]` slot badges clearly display how to cancel (`Tab` or `Ctrl+Q~Y`), and **clicking either the banner or the slot badge with the mouse immediately cancels `[AUTO]`**.
-   - **Secondary Action 2 (`Shift + Q~Y`) & Tertiary Action 3 (`Alt + Q~Y`)**:
+     - **Seamless Manual Override**: Even while `[AUTO]` is active, you can **press `Q~T` / `Shift+Q~T` / `Alt+Q~T` or use the mouse on the weapon UI at any time**. When interacting with a weapon panel via mouse, background `[AUTO]` automatically yields on that slot so your mouse drag/click is never interrupted.
+     - **Clear Cancel Prompts & Click-to-Cancel**: When `[AUTO]` is active, a top-center banner and green `[🟢自动]` slot badges clearly display how to cancel (`Tab` or `Ctrl+Q~T`), and **clicking either the banner or the slot badge with the mouse immediately cancels `[AUTO]`**.
+   - **Secondary Action 2 (`Shift + Q~T`) & Tertiary Action 3 (`Alt + Q~T`)**:
      - Full support for weapons with 2 or 3 distinct operations (see table below).
 
 3. **Character Selection & Fast Cubicle Dispatch (`1 ~ 6`)**
-   - Press `1 ~ 6` to select a front-line character, then press `Q ~ Y` to dispatch them to the corresponding device slot (pressing `Q ~ Y` again cycles between primary/secondary cubicles on multi-station devices).
+   - Press `1 ~ 6` to select a front-line character, then press `Q ~ T` to dispatch them to the corresponding device slot (pressing `Q ~ T` again cycles between primary/secondary cubicles on multi-station devices).
    - Double-tap `1 ~ 6` or press `0` / `Backspace` to recall a character to rest; press `Alt + 1 ~ 6` to swap with backup characters.
 
 4. **Context-Aware HUD & Hot-Reload**
@@ -43,16 +43,16 @@ A non-destructive keyboard control and Quality-of-Life (QoL) mod for **One Way T
 
 | Keyboard Row | Keys | Target Area | Description |
 | :--- | :--- | :--- | :--- |
-| **Row 1 (Numbers)** | `1` `2` `3` `4` `5` `6` | **Characters (1–6)** | **Tap `1~6` then `Q~Y`**: Dispatch character to device slot (repeat to cycle cubicles)<br>**Double-tap `1~6` or `0` / `Backspace`**: Recall character to rest<br>**`Alt + 1~6`**: Swap front-line character with backup |
-| **Row 2 (QWERTY)** | `Q` `W` `E` `R` `T` `Y`<br>+ `Tab` | **Weapon Bar (Slots 1–6, L to R)** | **Tap/Hold `Q~Y`**: Primary action + Smart Loop (attack/fire/auto-reload/charge)<br>**`Ctrl + Q~Y` / Click Badge**: Toggle slot **`[AUTO]` mode**<br>**`Tab` / Click Top Banner**: Toggle all weapon slots `[AUTO]`<br>**`Shift + Q~Y`**: Weapon Action 2<br>**`Alt + Q~Y`**: Weapon Action 3 |
-| **Row 3 (ASDFGH)** | `A` `S` `D` `F` `G` `H` | **Slot Maintenance (Slots 1–6)** | **Hold `A~H`**: Perform **Emergency Clear + Wrench Repair** on the corresponding device slot (`Q~Y`) directly above |
-| **Row 4 (ZXCVB)** | `Z` `X` `C` `V` `B`<br>+ `Space` | **Toolbox & Global Maintenance** | **Tap/Hold `Space`**: **Global Smart Maintenance** (auto-prioritizes all emergencies & repairs)<br>**`Z`**: Wrench / Repair Kit \| **`X`**: Extinguisher (Fire) \| **`C`**: Saw/Scissors (Vines)<br>**`V`**: Rag (Water/Acid) \| **`B`**: Wake-up (`B + 1~6` for specific character) |
+| **Row 1 (Numbers)** | `1` `2` `3` `4` `5` `6` | **Characters (1–6)** | **Tap `1~6` then `Q~T`**: Dispatch character to device slot (repeat to cycle cubicles)<br>**Double-tap `1~6` or `0` / `Backspace`**: Recall character to rest<br>**`Alt + 1~6`**: Swap front-line character with backup |
+| **Row 2 (QWERT)** | `Q` `W` `E` `R` `T`<br>+ `Tab` | **Weapon Bar (Fixed Slots 1–5, L to R)** | **Tap/Hold `Q~T`**: Primary action + Smart Loop (attack/fire/auto-reload/charge)<br>**`Ctrl + Q~T` / Click Badge**: Toggle slot **`[AUTO]` mode**<br>**`Tab` / Click Top Banner**: Toggle all weapon slots `[AUTO]`<br>**`Shift + Q~T`**: Weapon Action 2<br>**`Alt + Q~T`**: Weapon Action 3 |
+| **Row 3 (ASDFG)** | `A` `S` `D` `F` `G` | **Slot Maintenance (Fixed Slots 1–5)** | **Tap/Hold `A~G`**: Perform **Emergency Clear + Wrench Repair** on the corresponding fixed weapon slot (`Q~T`) directly above |
+| **Row 4 (ZXCVB)** | `Z` `X` `C` `V` `B`<br>+ `Space` | **Toolbox & Global Maintenance** | **Tap/Hold `Space`**: **Global Smart Maintenance** (auto-prioritizes all emergencies & repairs)<br>**`Z`**: Wrench / Repair Kit \| **`X`**: Extinguisher (Fire) \| **`C`**: Saw/Scissors/Chainsaw (Vines)<br>**`V`**: Rag/Mop/Drier (Water/Acid) \| **`B`**: Hammer/AED (`B + 1~6` for specific character) |
 
 ---
 
 ## Multi-Action Weapons (1–3 Actions) Mapping
 
-| Weapon / Device Type | Action 1 (`Q~Y` or `[AUTO]`) | Action 2 (`Shift + Q~Y`) | Action 3 (`Alt + Q~Y`) |
+| Weapon / Device Type | Action 1 (`Q~T` or `[AUTO]`) | Action 2 (`Shift + Q~T`) | Action 3 (`Alt + Q~T`) |
 | :--- | :--- | :--- | :--- |
 | **Standard Melee (Baton, Blade, Cactus, Flower, etc.)** | Immediate melee strike / swing | Manual sharpen (for resharpenable melee) | — |
 | **Claymore** | Charge + full-charge slash (auto-sharpens when dull) | **Manual Sharpen** | — |

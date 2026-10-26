@@ -14,7 +14,7 @@ namespace OneWayTickets.KeyboardMod
     /// <summary>
     /// Handles Row 1 keyboard shortcuts:
     /// - 1..6: Select front-line character 1..6
-    /// - 1..6 -> Q..Y: Dispatch selected character to device cubicle (cycles primary/secondary cubicle)
+    /// - 1..6 -> Q..T: Dispatch selected character to device cubicle (cycles primary/secondary cubicle)
     /// - Double-tap 1..6 or press 0 / Backspace: Recall character from cubicle to rest
     /// - Alt + 1..6: Swap front-line character with backup character
     /// </summary>
@@ -22,7 +22,7 @@ namespace OneWayTickets.KeyboardMod
     {
         private readonly DeviceSlotResolver _slotResolver;
         private readonly float[] _lastCharKeyPressTime = new float[6];
-        private readonly bool[] _consumedSlotKeyUntilRelease = new bool[6];
+        private readonly bool[] _consumedSlotKeyUntilRelease = new bool[DeviceSlotResolver.MaxWeaponSlots];
 
         public string LastActionStatus { get; private set; } = string.Empty;
         public float LastActionStatusTime { get; private set; }
@@ -107,11 +107,11 @@ namespace OneWayTickets.KeyboardMod
                 }
             }
 
-            // Check if a character is currently selected and player presses Q..Y to assign cubicle
+            // Check if a character is currently selected and player presses Q..T to assign cubicle
             Character currentSelected = Cubicle_Helper.GetSelectCharacter();
             if (currentSelected != null && !altHeld && !ctrlHeld && !shiftHeld)
             {
-                for (int slotIdx = 0; slotIdx < cfg.WeaponSlotKeys.Length && slotIdx < 6; slotIdx++)
+                for (int slotIdx = 0; slotIdx < cfg.WeaponSlotKeys.Length && slotIdx < DeviceSlotResolver.MaxWeaponSlots; slotIdx++)
                 {
                     Key wk = cfg.WeaponSlotKeys[slotIdx];
                     if (wk != Key.None && kb[wk].wasPressedThisFrame)
@@ -154,12 +154,12 @@ namespace OneWayTickets.KeyboardMod
             if (currentSelected == targetChar)
             {
                 Cubicle_Helper.SetSelectCharacter(targetChar);
-                SetStatus($"已选中 {charIndex + 1} 号角色 (按 Q-Y 派驻工位，再按一次撤回)");
+                SetStatus($"已选中 {charIndex + 1} 号角色 (按 Q-T 派驻工位，再按一次撤回)");
             }
             else
             {
                 Cubicle_Helper.SetSelectCharacter(targetChar);
-                SetStatus($"已选中 {charIndex + 1} 号角色 (按 Q-Y 派驻工位，双击 {charIndex + 1} 或按 0 撤回)");
+                SetStatus($"已选中 {charIndex + 1} 号角色 (按 Q-T 派驻工位，双击 {charIndex + 1} 或按 0 撤回)");
             }
         }
 

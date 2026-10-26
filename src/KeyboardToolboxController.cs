@@ -25,8 +25,8 @@ using World.Widgets;
 namespace OneWayTickets.KeyboardMod
 {
     /// <summary>
-    /// Handles Row 3 (A S D F G H) and Row 4 (Z X C V B + Space) Toolbox controls:
-    /// - Row 3 (A..H): Direct per-slot maintenance aligned under fixed slots Q..Y
+    /// Handles Row 3 (A S D F G) and Row 4 (Z X C V B + Space) Toolbox controls:
+    /// - Row 3 (A..G): Direct per-slot maintenance aligned under fixed slots Q..T (1..5)
     /// - Row 4 (Z X C V B): Specific tool category maintenance across the caravan, respecting each tool's upgrade stage
     ///   (e.g., Rag lv0 single-drop wipe -> BigRag/Mop lv1-2 hold per-device wipe -> Drier lv3 global blow-dry;
     ///    Saw lv0 -> Scissors/ChainSaw lv1-2 -> CircleSaw lv3;
@@ -37,7 +37,7 @@ namespace OneWayTickets.KeyboardMod
     {
         private readonly DeviceSlotResolver _slotResolver;
 
-        private readonly bool[] _holdingSlotMaintain = new bool[6];
+        private readonly bool[] _holdingSlotMaintain = new bool[DeviceSlotResolver.MaxWeaponSlots];
         private bool _holdingWrench;
         private bool _holdingExtinguisher;
         private bool _holdingSaw;
@@ -87,8 +87,8 @@ namespace OneWayTickets.KeyboardMod
             bool ctrlHeld = kb.leftCtrlKey.isPressed || kb.rightCtrlKey.isPressed;
             bool altHeld = kb.leftAltKey.isPressed || kb.rightAltKey.isPressed;
 
-            // Row 3: Per-slot direct maintenance keys (A S D F G H)
-            for (int i = 0; i < cfg.SlotMaintainKeys.Length && i < 6; i++)
+            // Row 3: Per-slot direct maintenance keys (A S D F G)
+            for (int i = 0; i < cfg.SlotMaintainKeys.Length && i < DeviceSlotResolver.MaxWeaponSlots; i++)
             {
                 Key k = cfg.SlotMaintainKeys[i];
                 if (k == Key.None || ctrlHeld || altHeld)
@@ -186,8 +186,8 @@ namespace OneWayTickets.KeyboardMod
 
             IReadOnlyList<ResolvedDeviceSlot> slots = _slotResolver.GetOrderedSlots();
 
-            // 1. Per-slot maintenance (A S D F G H)
-            for (int i = 0; i < slots.Count && i < 6; i++)
+            // 1. Per-slot maintenance (A S D F G)
+            for (int i = 0; i < slots.Count && i < DeviceSlotResolver.MaxWeaponSlots; i++)
             {
                 if (_holdingSlotMaintain[i])
                 {

@@ -80,13 +80,13 @@ namespace OneWayTickets.KeyboardMod
 
             try
             {
-                // 1. Character input (runs first so 1..6 -> Q..Y dispatch can claim the Q..Y press)
+                // 1. Character input (runs first so 1..6 -> Q..T dispatch can claim the Q..T press)
                 _charController.UpdateInput(kb);
 
-                // 2. Weapon bar input (Q..Y, Shift+Q..Y, Alt+Q..Y, Ctrl+Q..Y, Tab)
+                // 2. Weapon bar input (Q..T, Shift+Q..T, Alt+Q..T, Ctrl+Q..T, Tab)
                 _weaponController.UpdateInput(kb);
 
-                // 3. Toolbox input (A..H, Z/X/C/V/B, Space)
+                // 3. Toolbox input (A..G, Z/X/C/V/B, Space)
                 _toolboxController.UpdateInput(kb);
 
                 // 4. Run 120 TPS simulation steps when game ticker is active and unpaused
@@ -179,11 +179,11 @@ namespace OneWayTickets.KeyboardMod
         private void DrawTopStatusBar(ModConfig cfg, string activeToast, bool inCombat)
         {
             Character selectedChar = inCombat ? Cubicle_Helper.GetSelectCharacter() : null;
-            string charHint = selectedChar != null ? " 【已选中角色：按 Q-Y 派驻工位 / 按 0 撤回】" : string.Empty;
+            string charHint = selectedChar != null ? " 【已选中角色：按 Q-T 派驻工位 / 按 0 撤回】" : string.Empty;
             string smartHint = (inCombat && _toolboxController.IsGlobalSmartMaintaining) ? " 【空格：全局抢修中】" : string.Empty;
 
             string barText = string.IsNullOrEmpty(activeToast)
-                ? $"[键盘Mod] 1-6:选人派驻 | Q-Y:固定槽位1-6武器(Shift副/Alt三/Ctrl托管/Tab全托管) | A-H:对应槽位抢修 | ZXCVB:工具箱 | Space:全修 | F9:隐藏{charHint}{smartHint}"
+                ? $"[键盘Mod] 1-6:选人派驻 | Q-T:固定槽位1-5武器(Shift副/Alt三/Ctrl托管/Tab全托管) | A-G:对应槽位抢修 | ZXCVB:工具箱 | Space:全修 | F9:隐藏{charHint}{smartHint}"
                 : $"⌨ {activeToast}{charHint}{smartHint}";
 
             // Center horizontally so we never overlap the top-left Relic bar or top-right Caravan HP bar
@@ -199,7 +199,7 @@ namespace OneWayTickets.KeyboardMod
                 float bannerWidth = Mathf.Min(width, 760f);
                 float bannerX = (Screen.width - bannerWidth) * 0.5f;
                 Rect bannerRect = new Rect(bannerX, 32f, bannerWidth, 24f);
-                string bannerText = "🟢 自动托管运行中 — 随时可按键/鼠标手动操控武器 | 按 [Tab] 或点击此处一键取消全托管 (Ctrl+Q~Y 单槽取消)";
+                string bannerText = "🟢 自动托管运行中 — 随时可按键/鼠标手动操控武器 | 按 [Tab] 或点击此处一键取消全托管 (Ctrl+Q~T 单槽取消)";
                 if (GUI.Button(bannerRect, bannerText, _autoCancelBannerStyle))
                 {
                     _weaponController.CancelAllAutoFire("已通过顶部提示栏关闭全部武器【自动托管】");
@@ -218,7 +218,7 @@ namespace OneWayTickets.KeyboardMod
             Camera uiCam = sceneRoot.uiCamera;
             float now = Time.unscaledTime;
 
-            for (int i = 0; i < slots.Count && i < 6; i++)
+            for (int i = 0; i < slots.Count && i < DeviceSlotResolver.MaxWeaponSlots; i++)
             {
                 ResolvedDeviceSlot slot = slots[i];
                 if (slot.PanelTransform == null || !slot.PanelTransform.gameObject.activeInHierarchy)

@@ -10,12 +10,12 @@ using World.Devices.DeviceUiViews;
 namespace OneWayTickets.KeyboardMod
 {
     /// <summary>
-    /// Handles Row 2 keyboard controls (Q W E R T Y + Tab):
-    /// - Hold Q..Y or Ctrl+Q..Y / Tab Toggle: Smart Loop + Action 1
+    /// Handles Row 2 keyboard controls (Q W E R T + Tab for the 5 fixed weapon slots):
+    /// - Hold Q..T or Ctrl+Q..T / Tab Toggle: Smart Loop + Action 1
     ///   (auto-aim rotation, primary attack, auto-reload when empty, charge/carry/accelerate)
-    /// - Shift + Q..Y: Independent Action 2
+    /// - Shift + Q..T: Independent Action 2
     ///   (manual early reload, Throwing Spear ranged throw, Claymore sharpen, Charge melee strike, Quiver switch, Drum right stick)
-    /// - Alt + Q..Y: Independent Action 3
+    /// - Alt + Q..T: Independent Action 3
     ///   (Gatlin carry ammo, Cannon/Windlass/Helicopter/Ram crank rotation, Revolver unload cylinder)
     /// </summary>
     public sealed class KeyboardWeaponController
@@ -23,10 +23,10 @@ namespace OneWayTickets.KeyboardMod
         private readonly DeviceSlotResolver _slotResolver;
         private readonly KeyboardCharacterController _charController;
 
-        private readonly bool[] _autoFireToggles = new bool[6];
-        private readonly bool[] _holdingPrimary = new bool[6];
-        private readonly bool[] _holdingAction2 = new bool[6];
-        private readonly bool[] _holdingAction3 = new bool[6];
+        private readonly bool[] _autoFireToggles = new bool[DeviceSlotResolver.MaxWeaponSlots];
+        private readonly bool[] _holdingPrimary = new bool[DeviceSlotResolver.MaxWeaponSlots];
+        private readonly bool[] _holdingAction2 = new bool[DeviceSlotResolver.MaxWeaponSlots];
+        private readonly bool[] _holdingAction3 = new bool[DeviceSlotResolver.MaxWeaponSlots];
 
         private readonly MethodInfo _rotateBoneMethod;
         private readonly PropertyInfo _playerInteractingProp;
@@ -127,7 +127,7 @@ namespace OneWayTickets.KeyboardMod
 
         public bool IsSlotHoldingAnyAction(int slotIndex)
         {
-            if (slotIndex < 0 || slotIndex >= 6)
+            if (slotIndex < 0 || slotIndex >= DeviceSlotResolver.MaxWeaponSlots)
             {
                 return false;
             }
@@ -171,7 +171,7 @@ namespace OneWayTickets.KeyboardMod
                 SetStatus(anyOff ? "已开启全武器槽位【自动开火/装填托管 [AUTO]】" : "已关闭全武器槽位【自动托管】");
             }
 
-            for (int i = 0; i < cfg.WeaponSlotKeys.Length && i < 6; i++)
+            for (int i = 0; i < cfg.WeaponSlotKeys.Length && i < DeviceSlotResolver.MaxWeaponSlots; i++)
             {
                 Key key = cfg.WeaponSlotKeys[i];
                 if (key == Key.None)
@@ -249,7 +249,7 @@ namespace OneWayTickets.KeyboardMod
             IReadOnlyList<ResolvedDeviceSlot> slots = _slotResolver.GetOrderedSlots();
             float ability = ModConfig.Instance.ManualPlayerAbility;
 
-            for (int i = 0; i < slots.Count && i < 6; i++)
+            for (int i = 0; i < slots.Count && i < DeviceSlotResolver.MaxWeaponSlots; i++)
             {
                 ResolvedDeviceSlot slot = slots[i];
                 Device device = slot.Device;

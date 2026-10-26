@@ -23,17 +23,17 @@ namespace OneWayTickets.KeyboardMod
         public Key CharacterRecallKey { get; private set; } = Key.Digit0;
         public Key CharacterRecallAltKey { get; private set; } = Key.Backspace;
 
-        // Row 2: Weapon / Device slot keys (Q W E R T Y) + Global Auto-Fire toggle (Tab)
+        // Row 2: Weapon / Device slot keys (Q W E R T for the 5 caravan weapon slots) + Global Auto-Fire toggle (Tab)
         public Key[] WeaponSlotKeys { get; private set; } = new Key[]
         {
-            Key.Q, Key.W, Key.E, Key.R, Key.T, Key.Y
+            Key.Q, Key.W, Key.E, Key.R, Key.T
         };
         public Key GlobalAutoFireToggleKey { get; private set; } = Key.Tab;
 
-        // Row 3: Per-Slot Toolbox Direct Maintenance keys (A S D F G H, aligned under Q W E R T Y)
+        // Row 3: Per-Slot Toolbox Direct Maintenance keys (A S D F G, aligned under Q W E R T)
         public Key[] SlotMaintainKeys { get; private set; } = new Key[]
         {
-            Key.A, Key.S, Key.D, Key.F, Key.G, Key.H
+            Key.A, Key.S, Key.D, Key.F, Key.G
         };
 
         // Row 4: Specific Tool keys (Z X C V B) + Global Smart Maintenance (Space)
@@ -228,7 +228,7 @@ namespace OneWayTickets.KeyboardMod
             sb.AppendLine();
             sb.AppendLine("[Characters]");
             sb.AppendLine("# 第一排：角色选择键 (1-6) 与撤回键 (0 / Backspace)");
-            sb.AppendLine("# 用法：按 1-6 选中角色 -> 再按 Q-Y 派驻到对应武器工位；双击 1-6 或按 0/Backspace 撤回；Alt+1-6 替补轮换");
+            sb.AppendLine("# 用法：按 1-6 选中角色 -> 再按 Q-T 派驻到对应武器工位；双击 1-6 或按 0/Backspace 撤回；Alt+1-6 替补轮换");
             sb.AppendLine("CharacterKeys = Digit1, Digit2, Digit3, Digit4, Digit5, Digit6");
             sb.AppendLine("CharacterRecallKey = Digit0");
             sb.AppendLine("CharacterRecallAltKey = Backspace");
@@ -236,21 +236,21 @@ namespace OneWayTickets.KeyboardMod
             sb.AppendLine("DoubleTapRecallSeconds = 0.35");
             sb.AppendLine();
             sb.AppendLine("[Weapons]");
-            sb.AppendLine("# 第二排：武器/设备槽位键 (Q W E R T Y，从左到右对应 1-6 号位)");
+            sb.AppendLine("# 第二排：武器/设备槽位键 (Q W E R T，从左到右固定对应 1-5 号设备槽位)");
             sb.AppendLine("# 用法：");
-            sb.AppendLine("#   - 按住 Q-Y：主操作 + 智能循环（自动索敌旋转 + 开火攻击 + 空仓自动装填 + 蓄力）");
-            sb.AppendLine("#   - Ctrl + Q-Y：切换该槽位武器【后台自动开火/自动装填托管 [AUTO]】");
+            sb.AppendLine("#   - 按住 Q-T：主操作 + 智能循环（自动索敌旋转 + 开火攻击 + 空仓自动装填 + 蓄力）");
+            sb.AppendLine("#   - Ctrl + Q-T：切换该槽位武器【后台自动开火/自动装填托管 [AUTO]】");
             sb.AppendLine("#   - Tab：一键切换所有武器【全局自动托管】");
-            sb.AppendLine("#   - Shift + Q-Y：独立操作 2（手动提前装填 / 投矛远程投掷 / 大剑磨刀 / 箭袋切换 / 战鼓右槌）");
-            sb.AppendLine("#   - Alt + Q-Y：独立操作 3（加特林搬运弹药 / 火炮与绞盘手摇旋转 / 左轮退弹）");
-            sb.AppendLine("WeaponSlotKeys = Q, W, E, R, T, Y");
+            sb.AppendLine("#   - Shift + Q-T：独立操作 2（手动提前装填 / 投矛远程投掷 / 大剑磨刀 / 箭袋切换 / 战鼓右槌）");
+            sb.AppendLine("#   - Alt + Q-T：独立操作 3（加特林搬运弹药 / 火炮与绞盘手摇旋转 / 左轮退弹）");
+            sb.AppendLine("WeaponSlotKeys = Q, W, E, R, T");
             sb.AppendLine("GlobalAutoFireToggleKey = Tab");
             sb.AppendLine("ManualPlayerAbility = 1.0");
             sb.AppendLine();
             sb.AppendLine("[Toolbox]");
-            sb.AppendLine("# 第三排：按槽位直接维护键 (A S D F G H，与上方 Q W E R T Y 垂直对齐)");
-            sb.AppendLine("# 用法：按住 A-H 直接对上方对应槽位设备执行【修缮破损 / 灭火 / 安全剪除最上层藤蔓 / 擦水擦酸 / 拍醒停滞】");
-            sb.AppendLine("SlotMaintainKeys = A, S, D, F, G, H");
+            sb.AppendLine("# 第三排：按槽位直接维护键 (A S D F G，与上方 Q W E R T 1-5 号槽垂直对齐)");
+            sb.AppendLine("# 用法：按住 A-G 直接对上方对应槽位设备执行【修缮破损 / 灭火 / 安全剪除最上层藤蔓 / 擦水擦酸 / 拍醒停滞】");
+            sb.AppendLine("SlotMaintainKeys = A, S, D, F, G");
             sb.AppendLine();
             sb.AppendLine("# 第四排：按工具类别维护键 (Z X C V B) 与全局智能抢修键 (Space)");
             sb.AppendLine("#   - Z (扳手)：自动修缮全车破损设备");

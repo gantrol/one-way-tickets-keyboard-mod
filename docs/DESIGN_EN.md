@@ -13,7 +13,7 @@ This document describes the internal mechanics, ergonomic two-handed layout, mul
   - **Left Hand Home Row (`A S D F G`)**: Fixed Weapon Slots 1–5 (Primary Fire/Strike, Smart Auto-Reload, and `Ctrl + A~G` `[AUTO]` hosting).
   - **Right Hand Home Row (`H J K L ;`)**: The 5 core Toolbox tools (Wrench, Extinguisher, Saw, Rag/Drier, WakeUp), paired with `Space` for Global Smart Maintenance.
 - **Left Hand Upper Row (`Q W E R T`)**: Aligned vertically above `A S D F G` for **Per-Slot Quick Maintenance** on Slots 1–5.
-- **Left Hand Lower Row (`Z X C`)**: Caravan driving controls — **`Z` Brake**, **`X` Psionic Acceleration (Sprint Charge + Furnace Bellows + Push Car)**, and **`C` Reserved Wheel Slot Key**.
+- **Left Hand Lower Row (`Z X C V`)**: Caravan driving controls — **`Z` Brake**, **`X` Psionic Acceleration (Sprint Charge)**, **`C` Furnace Bellows (+ Push Car)**, and **`V` Reserved Wheel Slot Key**.
 - **Right Hand Upper Row (`Y U I O P [` + `]`/`'`)**: Character selection (1–6, with number keys `1–6` also active as aliases) and **One-Key Optimal Character Auto-Assign (`'` or `]`)**.
 
 ### 1.2 Fixed 5 Weapon Slots (Wheel Slot Excluded)
@@ -41,13 +41,14 @@ Decompiling `World.dll`, `AutoCodes.dll`, and scene assets confirmed that every 
 
 ---
 
-## 3. Caravan Driving: Brake (`Z`), Psionic Boost (`X`) & Wheel Slot (`C`)
+## 3. Caravan Driving: Brake (`Z`), Psionic Boost (`X`), Bellows (`C`) & Wheel Slot (`V`)
 
 | Shortcut | Action | Internal Mechanism |
 | :--- | :--- | :--- |
 | **`Z` (Hold)** | **Caravan Brake** | Pulls `CaravanLever2.lever_slider` to maximum and sets `WorldContext.brake_lever_input = 1f`; releasing `Z` releases the brake lever |
-| **`X` (Tap/Hold)** | **Psionic Boost & Bellows** | Triggers `SpeedChargeView.do()` (Psionic Sprint Charge) when off cooldown, pumps the furnace bellows (`Widget_Blower_Context` / `BellowView`) while held, and pushes the caravan if stopped |
-| **`C` (Tap/Hold)** | **Wheel Slot Key** | Activates wheel-slot abilities (`JetWheel.Accelerate()`, `BasicWheelUiView.Push_Car_btn`) or bellows |
+| **`X` (Tap)** | **Psionic Boost** | Strictly triggers `SpeedChargeView.@do()` (Psionic Sprint Charge) without touching the bellows |
+| **`C` (Hold/Tap)** | **Furnace Bellows** | Pumps the furnace bellows (`Widget_Blower_Context` / `BellowView`) while held, and pushes the caravan if stopped |
+| **`V` (Tap)** | **Wheel Slot Key** | Activates wheel-slot abilities (`JetWheel.Accelerate()`, `BasicWheelUiView.Push_Car_btn`) |
 
 ---
 

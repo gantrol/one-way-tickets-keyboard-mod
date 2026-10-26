@@ -13,10 +13,11 @@ using World.Widgets;
 namespace OneWayTickets.KeyboardMod
 {
     /// <summary>
-    /// Handles Left-Hand Lower Row (Z X C) caravan driving and wheel controls:
+    /// Handles Left-Hand Lower Row (Z X C V) caravan driving and wheel controls:
     /// - Z (BrakeKey): Hold to pull the caravan brake lever (CaravanLever2); release to let go.
-    /// - X (PsionicBoostKey): Tap/Hold to trigger Psionic Sprint Charge (SpeedChargeView) + pump furnace bellows (BellowView / Widget_Blower_Context) + push stuck caravan.
-    /// - C (WheelSlotKey): Reserved wheel slot operation (JetWheel boost / PushCar / Bellows).
+    /// - X (PsionicBoostKey): Dedicated to Psionic Sprint Charge (SpeedChargeView).
+    /// - C (BellowsKey): Hold to pump furnace bellows (BellowView / Widget_Blower_Context) and push stuck caravan.
+    /// - V (WheelSlotKey): Reserved wheel slot operation (JetWheel boost / PushCar).
     /// </summary>
     public sealed class KeyboardDrivingController
     {
@@ -36,7 +37,7 @@ namespace OneWayTickets.KeyboardMod
         public string LastActionStatus { get; private set; } = string.Empty;
         public float LastActionStatusTime { get; private set; }
         public bool IsBraking => _isKeyboardBraking;
-        public bool IsBoosting => _isKeyboardBlowering;
+        public bool IsBlowering => _isKeyboardBlowering;
 
         public void UpdateInput(Keyboard kb)
         {
@@ -58,12 +59,18 @@ namespace OneWayTickets.KeyboardMod
             bool brakeJustPressed = cfg.BrakeKey != Key.None && kb[cfg.BrakeKey].wasPressedThisFrame;
             HandleBrakeInput(brakePressed, brakeJustPressed, ModConfig.FormatKeyLabel(cfg.BrakeKey));
 
-            // 2. Psionic Boost / Sprint + Bellows Key (X)
-            bool boostPressed = cfg.PsionicBoostKey != Key.None && kb[cfg.PsionicBoostKey].isPressed;
-            bool boostJustPressed = cfg.PsionicBoostKey != Key.None && kb[cfg.PsionicBoostKey].wasPressedThisFrame;
-            HandleBoostInput(boostPressed, boostJustPressed, ModConfig.FormatKeyLabel(cfg.PsionicBoostKey));
+            // 2. Psionic Acceleration Key (X) - strictly separated from Bellows
+            if (cfg.PsionicBoostKey != Key.None && kb[cfg.PsionicBoostKey].wasPressedThisFrame)
+            {
+                HandlePsionicBoostInput(ModConfig.FormatKeyLabel(cfg.PsionicBoostKey));
+            }
 
-            // 3. Wheel Slot Reserved Key (C)
+            // 3. Furnace Bellows Key (C) - strictly separated from Psionic Acceleration
+            bool bellowsPressed = cfg.BellowsKey != Key.None && kb[cfg.BellowsKey].isPressed;
+            bool bellowsJustPressed = cfg.BellowsKey != Key.None && kb[cfg.BellowsKey].wasPressedThisFrame;
+            HandleBellowsInput(bellowsPressed, bellowsJustPressed, ModConfig.FormatKeyLabel(cfg.BellowsKey));
+
+            // 4. Wheel Slot Reserved Key (V)
             if (cfg.WheelSlotKey != Key.None && kb[cfg.WheelSlotKey].wasPressedThisFrame)
             {
                 HandleWheelSlotInput(ModConfig.FormatKeyLabel(cfg.WheelSlotKey));
@@ -154,36 +161,44 @@ namespace OneWayTickets.KeyboardMod
             }
         }
 
-        private void HandleBoostInput(bool isPressed, bool wasPressedThisFrame, string keyLabel)
+        private void HandlePsionicBoostInput(string keyLabel)
+        {
+            try
+            {
+                if (TryTriggerSpeedCharge(out string sprintDetail))
+                {
+                    SetStatus($"[{keyLabel}:灵能加速] 已触发灵能冲刺加速!");
+                }
+                else
+                {
+                    SetStatus($"[{keyLabel}:灵能加速] {(string.IsNullOrEmpty(sprintDetail) ? "灵能加速冷却中或未解锁" : sprintDetail)}");
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private void HandleBellowsInput(bool isPressed, bool wasPressedThisFrame, string keyLabel)
         {
             try
             {
                 if (wasPressedThisFrame)
                 {
-                    bool triggeredSprint = TryTriggerSpeedCharge(out string sprintDetail);
                     bool triggeredBlower = TryStartBlower();
                     bool triggeredPush = TryPushCaravanIfStopped();
-                    bool triggeredJet = TryTriggerWheelDevice(out string wheelDetail);
 
-                    if (triggeredSprint)
+                    if (triggeredBlower)
                     {
-                        SetStatus($"[{keyLabel}:灵能加速] 已触发灵能冲刺加速! {(triggeredBlower ? "+ 炉火鼓风中" : string.Empty)}");
-                    }
-                    else if (triggeredBlower)
-                    {
-                        SetStatus($"[{keyLabel}:加速] 正在鼓风提升炉火功率! {(string.IsNullOrEmpty(sprintDetail) ? string.Empty : $"({sprintDetail})")}");
-                    }
-                    else if (triggeredJet)
-                    {
-                        SetStatus($"[{keyLabel}:加速] {wheelDetail}");
+                        SetStatus($"[{keyLabel}:风箱] 正在鼓动炉火风箱加速! (按住 {keyLabel} 持续鼓风)");
                     }
                     else if (triggeredPush)
                     {
-                        SetStatus($"[{keyLabel}:加速] 已推动篷车起步加速!");
+                        SetStatus($"[{keyLabel}:风箱/推车] 已推动篷车起步!");
                     }
                     else
                     {
-                        SetStatus($"[{keyLabel}:灵能加速] {(string.IsNullOrEmpty(sprintDetail) ? "当前加速冷却中或未解锁" : sprintDetail)}");
+                        SetStatus($"[{keyLabel}:风箱] 当前炉火风箱未就绪或冷却中");
                     }
                 }
 
@@ -197,6 +212,7 @@ namespace OneWayTickets.KeyboardMod
                 else if (_isKeyboardBlowering)
                 {
                     StopBlower();
+                    SetStatus($"[{keyLabel}:风箱] 已停止鼓风");
                 }
             }
             catch
@@ -344,12 +360,6 @@ namespace OneWayTickets.KeyboardMod
                 if (TryPushCaravanIfStopped())
                 {
                     SetStatus($"[{keyLabel}:车轮槽] 已触发篷车推车起步!");
-                    return;
-                }
-
-                if (TryStartBlower())
-                {
-                    SetStatus($"[{keyLabel}:车轮槽] 当前车轮为被动型，已触发风箱助推!");
                     return;
                 }
 

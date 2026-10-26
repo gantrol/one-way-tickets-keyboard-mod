@@ -31,10 +31,11 @@ namespace OneWayTickets.KeyboardMod
             Key.Q, Key.W, Key.E, Key.R, Key.T
         };
 
-        // Left Hand Lower Row: Driving & Wheel controls (Z = Brake, X = Psionic Boost / Sprint, C = Wheel Slot Reserved)
+        // Left Hand Lower Row: Driving & Wheel controls (Z = Brake, X = Psionic Acceleration, C = Furnace Bellows, V = Wheel Slot Reserved)
         public Key BrakeKey { get; private set; } = Key.Z;
         public Key PsionicBoostKey { get; private set; } = Key.X;
-        public Key WheelSlotKey { get; private set; } = Key.C;
+        public Key BellowsKey { get; private set; } = Key.C;
+        public Key WheelSlotKey { get; private set; } = Key.V;
 
         // =====================================================================
         // RIGHT HAND
@@ -144,6 +145,9 @@ namespace OneWayTickets.KeyboardMod
                     break;
                 case "PsionicBoostKey":
                     PsionicBoostKey = ParseKey(val, PsionicBoostKey);
+                    break;
+                case "BellowsKey":
+                    BellowsKey = ParseKey(val, BellowsKey);
                     break;
                 case "WheelSlotKey":
                     WheelSlotKey = ParseKey(val, WheelSlotKey);
@@ -296,10 +300,11 @@ namespace OneWayTickets.KeyboardMod
             sb.AppendLine("# 左手上排 (Q W E R T)：固定 1-5 号槽位一键定点抢修（与下方 A-G 一一对应）");
             sb.AppendLine("SlotMaintainKeys = Q, W, E, R, T");
             sb.AppendLine();
-            sb.AppendLine("# 左手下排 (Z X C)：刹车、灵能加速/冲刺、车轮槽保留键");
+            sb.AppendLine("# 左手下排 (Z X C V)：刹车(Z)、灵能加速(X)、风箱(C)、车轮槽保留键(V)");
             sb.AppendLine("BrakeKey = Z");
             sb.AppendLine("PsionicBoostKey = X");
-            sb.AppendLine("WheelSlotKey = C");
+            sb.AppendLine("BellowsKey = C");
+            sb.AppendLine("WheelSlotKey = V");
             sb.AppendLine("ManualPlayerAbility = 1.0");
             sb.AppendLine();
             sb.AppendLine("[RightHand_Toolbox]");
